@@ -58,7 +58,7 @@ app.post("/api/login", async (req, res) => {
 
     // ✅ Use secret from .env file
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1d",
+      expiresIn: "1h",
     });
 
     res.json({
