@@ -1,4 +1,5 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect } from "react";
+import { jwtDecode } from "jwt-decode"; // ✅ use jwt-decode for all tokens
 
 const AuthContext = createContext(null);
 
@@ -6,43 +7,47 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    // Try to get user data from localStorage on initial load
-    const token = localStorage.getItem('token');
+    // Try to get token from localStorage on initial load
+    const token = localStorage.getItem("token");
     if (token) {
-      let name = '';
-      let email = '';
       try {
-        // Decode JWT token to get user info
-        const tokenPayload = JSON.parse(atob(token.split('.')[1]));
-        name = tokenPayload.name || '';
-        email = tokenPayload.email || '';
+        // ✅ Use jwtDecode for both backend JWT & Google ID token
+        const decoded = jwtDecode(token);
+
+        const name =
+          decoded.name ||
+          (decoded.given_name
+            ? `${decoded.given_name} ${decoded.family_name || ""}`.trim()
+            : "");
+        const email = decoded.email || "";
+
+        setUser({ name, email });
       } catch (e) {
-        // If token doesn't have name, fallback to localStorage
-        const userData = localStorage.getItem('userData');
-        if (userData) {
-          const parsed = JSON.parse(userData);
-          name = parsed.name || '';
-          email = parsed.email || '';
-        } else {
-          const signupData = localStorage.getItem('signupData');
-          if (signupData) {
-            const parsedSignup = JSON.parse(signupData);
-            name = parsedSignup.name || '';
-            email = parsedSignup.email || '';
-          }
+        // If decoding fails, fallback to stored userData
+        const userData =
+          JSON.parse(localStorage.getItem("userData")) ||
+          JSON.parse(localStorage.getItem("signupData") || "{}");
+
+        if (userData?.email) {
+          setUser({
+            name: userData.name || "",
+            email: userData.email || "",
+          });
         }
       }
-      setUser({ name, email });
     }
   }, []);
 
   const login = (token, userData) => {
-    localStorage.setItem('token', token);
+    localStorage.setItem("token", token);
+    localStorage.setItem("userData", JSON.stringify(userData));
     setUser(userData);
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem("token");
+    localStorage.removeItem("userData");
+    localStorage.removeItem("signupData");
     setUser(null);
   };
 
@@ -56,7 +61,7 @@ export const AuthProvider = ({ children }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

@@ -2,7 +2,9 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Eye, EyeOff } from "lucide-react";
-import LiquidEther from "../components/LiquidEther"; // 1. Import the effect
+import LiquidEther from "../components/LiquidEther";
+// ✅ Import the GoogleLogin component
+import { GoogleLogin } from "@react-oauth/google";
 
 const API_URL = "http://localhost:5000/api";
 
@@ -13,120 +15,62 @@ export default function AuthPage() {
   const [message, setMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
+  const { login } = useAuth();
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
-
-  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
     try {
       const endpoint = isLogin ? "/login" : "/signup";
-      const body = isLogin ? { email: form.email, password: form.password } : form;
+      const body = isLogin
+        ? { email: form.email, password: form.password }
+        : form;
+
       const res = await fetch(API_URL + endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
+
       const data = await res.json();
-      if (!res.ok) return setMessage(data.message || "Something went wrong");
-      if (isLogin && data.token) {
-        // After login, fetch user profile to get the correct name
-        let userInfo = { name: '', email: form.email };
-        try {
-          const profileRes = await fetch("http://localhost:5000/api/user/profile", {
-            headers: { 'Authorization': `Bearer ${data.token}` }
-          });
-          if (profileRes.ok) {
-            const profileData = await profileRes.json();
-            userInfo = {
-              name: profileData.name || '',
-              email: profileData.email || form.email
-            };
-          } else {
-            // fallback: use signup name from localStorage
-            const signupData = localStorage.getItem("signupData");
-            if (signupData) {
-              const parsedSignup = JSON.parse(signupData);
-              userInfo.name = parsedSignup.name || '';
-            }
-          }
-        } catch (err) {
-          // fallback: use signup name from localStorage
-          const signupData = localStorage.getItem("signupData");
-          if (signupData) {
-            const parsedSignup = JSON.parse(signupData);
-            userInfo.name = parsedSignup.name || '';
-          }
-        }
-        login(data.token, userInfo);
-        localStorage.setItem("userData", JSON.stringify(userInfo));
+      if (!res.ok) {
+        return setMessage(data.message || "Something went wrong");
+      }
+
+      if (isLogin) {
+        // The /login endpoint now returns user data, so no need for another fetch
+        login(data.token, data.user);
+        localStorage.setItem("userData", JSON.stringify(data.user));
         setMessage("Login successful! Redirecting...");
         setTimeout(() => navigate("/"), 1000);
-      } else if (!isLogin) {
-        // After successful signup, automatically try to log in
-        try {
-          const loginRes = await fetch(API_URL + "/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-              email: form.email, 
-              password: form.password 
-            }),
-          });
-          const loginData = await loginRes.json();
-          
-          if (loginRes.ok && loginData.token) {
-            // Store user data and log them in
-            // Save signup name for fallback on login
-            localStorage.setItem("signupData", JSON.stringify({
-              name: form.name,
-              email: form.email
-            }));
-            localStorage.setItem("userData", JSON.stringify({
-              name: form.name,
-              email: form.email
-            }));
-            login(loginData.token, {
-              name: form.name,
-              email: form.email
-            });
-            setMessage("Signup successful! Redirecting...");
-            setTimeout(() => navigate("/"), 1000);
-          } else {
-            // If auto-login fails, show message and redirect to login
-            setMessage("Signup successful! Please login to continue");
-            setForm(prev => ({ ...prev, password: "" }));
-            setTimeout(() => setIsLogin(true), 1000);
-          }
-        } catch (err) {
-          // If auto-login fails, fall back to manual login
-          setMessage("Signup successful! Please login to continue");
-          setForm(prev => ({ ...prev, password: "" }));
-          setTimeout(() => setIsLogin(true), 1000);
-        }
+      } else {
+        // After signup, prompt user to log in
+        setMessage("Signup successful! Please login to continue.");
+        setIsLogin(true);
+        setForm({ name: "", email: form.email, password: "" });
       }
-    } catch (err) {
-      setMessage("Server error");
+    } catch {
+      setMessage("Server error. Please try again later.");
     }
   };
+  
+  // ❌ The useGoogleLogin hook is no longer needed
 
   return (
-    // 2. Add `relative` and `overflow-hidden` for positioning
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 relative overflow-hidden">
-      
-      {/* 3. Add LiquidEther in a full-screen div behind everything else */}
       <div className="absolute inset-0 z-0">
         <LiquidEther />
       </div>
 
-      {/* 4. Add `relative z-10` and a semi-transparent background to the form container */}
       <div className="max-w-md w-full bg-black/40 backdrop-blur-sm border border-gray-800 rounded-2xl p-10 shadow-2xl relative z-10">
         <h1 className="text-3xl font-bold mb-6 text-blue-400 text-center">
           {isLogin ? "Login" : "Sign Up"}
         </h1>
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           {!isLogin && (
             <input
@@ -139,6 +83,7 @@ export default function AuthPage() {
               required
             />
           )}
+
           <input
             type="email"
             name="email"
@@ -148,6 +93,7 @@ export default function AuthPage() {
             className="px-4 py-2 rounded bg-black/60 border border-gray-700 text-white focus:outline-none focus:border-blue-500 transition-colors"
             required
           />
+
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
@@ -168,6 +114,7 @@ export default function AuthPage() {
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
           </div>
+
           <button
             type="submit"
             className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-xl font-semibold shadow-lg transition cursor-pointer"
@@ -175,16 +122,64 @@ export default function AuthPage() {
             {isLogin ? "Login" : "Sign Up"}
           </button>
         </form>
+
+        {/* Separator */}
+        <div className="my-6 flex items-center">
+            <div className="flex-grow border-t border-gray-600"></div>
+            <span className="mx-4 text-gray-400">OR</span>
+            <div className="flex-grow border-t border-gray-600"></div>
+        </div>
+
+        {/* ✅ Replace custom button with the GoogleLogin component */}
+        <div className="flex justify-center">
+          <GoogleLogin
+            onSuccess={async (credentialResponse) => {
+              const idToken = credentialResponse.credential;
+              try {
+                const res = await fetch(`${API_URL}/google-login`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ token: idToken }), // Send the ID Token
+                });
+
+                const data = await res.json();
+                if (res.ok && data.token) {
+                  login(data.token, data.user);
+                  localStorage.setItem("userData", JSON.stringify(data.user));
+                  setMessage("Google login successful! Redirecting...");
+                  setTimeout(() => navigate("/"), 1000);
+                } else {
+                  setMessage(data.message || "Google login failed");
+                }
+              } catch (err) {
+                console.error("Google login fetch error:", err);
+                setMessage("Google login failed");
+              }
+            }}
+            onError={() => {
+              setMessage("Google Login Failed");
+            }}
+            theme="outline"
+            size="large"
+            shape="pill"
+          />
+        </div>
+
         <button
-          className="mt-6 text-blue-300 hover:underline cursor-pointer"
+          className="w-full text-center mt-6 text-blue-300 hover:underline cursor-pointer"
           onClick={() => {
             setIsLogin(!isLogin);
             setMessage("");
           }}
         >
-          {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Login"}
+          {isLogin
+            ? "Don't have an account? Sign Up"
+            : "Already have an account? Login"}
         </button>
-        {message && <div className="mt-4 text-red-400">{message}</div>}
+
+        {message && (
+          <div className="mt-4 text-center text-red-400">{message}</div>
+        )}
       </div>
     </div>
   );

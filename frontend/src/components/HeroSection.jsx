@@ -1,21 +1,21 @@
 "use client";
 
 import Threads from "./Threads";
-import { motion } from "framer-motion"; // 👈 Import motion
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
-// Animation variants for the main container (no changes here)
+// Animation variants for the main container
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.3, // Delay between h1, p, and buttons
+      staggerChildren: 0.3,
     },
   },
 };
 
-// MODIFIED: This variant now also staggers its own children (the words)
+// Variants for line and text
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
@@ -24,12 +24,12 @@ const itemVariants = {
     transition: {
       duration: 0.6,
       ease: "easeOut",
-      staggerChildren: 0.08, // 👈 Add stagger for the text trail effect
+      staggerChildren: 0.08,
     },
   },
 };
 
-// NEW: A separate variant for each word in the heading
+// Word animation
 const wordVariants = {
   hidden: {
     opacity: 0,
@@ -46,8 +46,7 @@ const wordVariants = {
 };
 
 export default function HeroSection() {
-  const title = "Crack Your Interview with";
-  const words = title.split(" ");
+  const words = ["Crack", "Your", "Interview"]; // keep these in one line
   const navigate = useNavigate();
 
   const handleLearnMore = () => {
@@ -73,22 +72,27 @@ export default function HeroSection() {
         animate="visible"
         variants={containerVariants}
       >
-        {/* MODIFIED: The h1 now maps over words to create the trail effect */}
+        {/* Heading */}
         <motion.h1
           variants={itemVariants}
-          className="text-5xl md:text-7xl font-bold drop-shadow-lg"
+          className="text-5xl md:text-7xl font-bold drop-shadow-lg leading-tight"
         >
-          {words.map((word, index) => (
-            <motion.span
-              key={index}
-              variants={wordVariants}
-              className="inline-block"
-            >
-              {word}&nbsp; {/* Adds a space after each word */}
-            </motion.span>
-          ))}
-          {/* The "AI" part joins the animation trail */}
-          <motion.span variants={wordVariants} className="inline-block">
+          {/* "Crack Your Interview" in one line */}
+          <motion.span variants={itemVariants} className="block">
+            {words.map((word, index) => (
+              <motion.span
+                key={index}
+                variants={wordVariants}
+                className="inline-block mr-2"
+              >
+                {word}
+              </motion.span>
+            ))}
+          </motion.span>
+
+          {/* "with AI" below */}
+          <motion.span variants={wordVariants} className="block mt-2">
+            with{" "}
             <span className="bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
               AI
             </span>
