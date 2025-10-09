@@ -55,159 +55,209 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="fixed top-0 left-0 w-full z-50 backdrop-blur-lg bg-black/30 border-b border-gray-700">
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-3 flex justify-between items-center">
-        {/* Logo */}
-        <Link to="/" className="text-xl sm:text-2xl font-extrabold bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
-          Pathwise
-        </Link>
-
-        {/* Desktop Menu */}
-        <div className="hidden md:flex items-center gap-8">
-          <ul className="flex gap-8">
-            {navLinks.map((link) => (
-              <li key={link.name} className="relative group">
-                <Link to={link.to} className="flex items-center gap-2 text-gray-200 hover:text-blue-400 transition-colors">
-                  {link.icon}
-                  <span>{link.name}</span>
-                </Link>
-                <span className="absolute left-0 -bottom-1 w-0 h-0.5 bg-gradient-to-r from-blue-400 to-purple-500 transition-all duration-300 group-hover:w-full"></span>
-              </li>
-            ))}
-          </ul>
-          {loggedIn ? (
-            <div className="relative" ref={dropdownRef}>
-              <button
-                onClick={() => setDropdown((prev) => !prev)}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold hover:scale-105 transition-transform shadow-lg"
-                aria-label="Profile menu"
-              >
-                <UserCircle size={20} />
-                <ChevronDown size={16} className={`transition-transform ${dropdown ? 'rotate-180' : ''}`} />
-              </button>
-              {dropdown && (
-                 <div className="absolute right-0 mt-2 w-64 bg-gray-900 border border-gray-700 rounded-lg shadow-lg z-50 flex flex-col">
-                 <button
-                  onClick={() => { setDropdown(false); navigate('/profile'); }}
-                  className="w-full px-4 py-3 text-left text-white hover:bg-gray-800 rounded-t-lg flex items-start gap-3"
-                >
-                  <UserCircle size={18} className="mt-1 text-gray-400" />
-                  <div>
-                    <div className="font-semibold">Profile</div>
-                    <div className="text-xs text-gray-400">View your interview history</div>
-                  </div>
-                </button>
-                <button
-                  onClick={() => { setDropdown(false); navigate('/help'); }}
-                  className="w-full px-4 py-3 text-left text-white hover:bg-gray-800 flex items-start gap-3 border-t border-gray-700"
-                >
-                  <HelpCircle size={18} className="mt-1 text-gray-400" />
-                  <div>
-                    <div className="font-semibold">Help & Support</div>
-                    <div className="text-xs text-gray-400">FAQs and documentation</div>
-                  </div>
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="w-full px-4 py-3 text-left text-white hover:bg-gray-800 rounded-b-lg flex items-start gap-3 border-t border-gray-700"
-                >
-                  <LogOut size={18} className="mt-1 text-gray-400" />
-                   <div>
-                    <div className="font-semibold">Logout</div>
-                    <div className="text-xs text-gray-400">Sign out of your account</div>
-                  </div>
-                </button>
-              </div>
-              )}
-            </div>
-          ) : (
-            <Link to="/auth">
-              <button className="px-5 py-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold hover:scale-105 transition-transform shadow-lg">
-                Login
-              </button>
-            </Link>
-          )}
-        </div>
-
-        {/* NEW: Mobile Icon Bar - Visible only on mobile */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex md:hidden items-center gap-8">
-          {navLinks.map((link) => (
-            <Link key={link.name} to={link.to} className="text-gray-300 hover:text-white transition-colors p-2" aria-label={link.name}>
-              {React.cloneElement(link.icon, { size: 24 })}
-            </Link>
-          ))}
-        </div>
-
-        {/* Mobile Menu Button (Hamburger) */}
-        <div className="md:hidden">
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="text-gray-200 p-2 rounded-lg hover:bg-gray-800 transition-colors"
-            aria-label="Toggle menu"
+    <nav className="fixed top-0 left-0 w-full z-50 backdrop-blur-xl bg-black/40 border-b border-white/10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <Link 
+            to="/" 
+            className="text-xl sm:text-2xl font-extrabold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 text-transparent bg-clip-text hover:scale-105 transition-transform"
           >
-            {isOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+            Pathwise
+          </Link>
+
+          {/* Desktop Navigation */}
+          <div className="hidden lg:flex items-center gap-2">
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                to={link.to}
+                className="group relative px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300"
+              >
+                <span className="flex items-center gap-2">
+                  {link.icon}
+                  <span className="font-medium">{link.name}</span>
+                </span>
+                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-gradient-to-r from-blue-400 to-purple-400 transition-all duration-300 group-hover:w-3/4"></span>
+              </Link>
+            ))}
+          </div>
+
+          {/* Desktop Account Section */}
+          <div className="hidden lg:flex items-center">
+            {loggedIn ? (
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setDropdown((prev) => !prev)}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold hover:shadow-lg hover:shadow-purple-500/25 hover:scale-105 transition-all duration-300"
+                  aria-label="Profile menu"
+                >
+                  <UserCircle size={20} />
+                  <span className="hidden sm:inline">Account</span>
+                  <ChevronDown 
+                    size={16} 
+                    className={`transition-transform duration-300 ${dropdown ? 'rotate-180' : ''}`} 
+                  />
+                </button>
+                
+                {dropdown && (
+                  <div className="absolute right-0 mt-3 w-72 bg-[#0d0d0d] border border-white/10 rounded-2xl shadow-2xl shadow-black/40 overflow-hidden">
+                    <button
+                      onClick={() => { setDropdown(false); navigate('/profile'); }}
+                      className="w-full px-5 py-4 text-left text-white bg-[#1a1a1a] hover:bg-[#222] transition-colors flex items-start gap-3 group"
+                    >
+                      <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20 transition-colors">
+                        <UserCircle size={18} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-semibold text-gray-100">Profile</div>
+                        <div className="text-xs text-gray-400 mt-0.5">View your interview history</div>
+                      </div>
+                    </button>
+                    <div className="h-px bg-white/10"></div>
+                    <button
+                      onClick={() => { setDropdown(false); navigate('/help'); }}
+                      className="w-full px-5 py-4 text-left text-white bg-[#1a1a1a] hover:bg-[#222] transition-colors flex items-start gap-3 group"
+                    >
+                      <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20 transition-colors">
+                        <HelpCircle size={18} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-semibold text-gray-100">Help & Support</div>
+                        <div className="text-xs text-gray-400 mt-0.5">FAQs and documentation</div>
+                      </div>
+                    </button>
+                    <div className="h-px bg-white/10"></div>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full px-5 py-4 text-left text-white bg-[#1a1a1a] hover:bg-[#2a0000] transition-colors flex items-start gap-3 group"
+                    >
+                      <div className="p-2 rounded-lg bg-red-500/10 text-red-400 group-hover:bg-red-500/20 transition-colors">
+                        <LogOut size={18} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-semibold text-gray-100">Logout</div>
+                        <div className="text-xs text-gray-400 mt-0.5">Sign out of your account</div>
+                      </div>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link to="/auth">
+                <button className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold hover:shadow-lg hover:shadow-purple-500/25 hover:scale-105 transition-all duration-300">
+                  Login
+                </button>
+              </Link>
+            )}
+          </div>
+
+          {/* Mobile Navigation Icons */}
+          <div className="flex lg:hidden items-center gap-6">
+            {navLinks.map((link) => (
+              <Link 
+                key={link.name} 
+                to={link.to} 
+                className="text-gray-400 hover:text-white hover:scale-110 transition-all duration-300 p-2" 
+                aria-label={link.name}
+              >
+                {React.cloneElement(link.icon, { size: 22 })}
+              </Link>
+            ))}
+
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="text-gray-300 hover:text-white p-2 rounded-lg bg-black/70 hover:bg-black/90 backdrop-blur-sm transition-all duration-300 ml-2"
+              aria-label="Toggle menu"
+            >
+              {isOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Mobile Slide-in Menu (now for account actions) */}
+      {/* Mobile Slide-in Account Menu */}
       <div 
-        className={`fixed inset-0 bg-black/60 z-40 md:hidden transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-black/80 z-40 lg:hidden transition-opacity duration-300 ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={() => setIsOpen(false)}
         aria-hidden={!isOpen}
       >
         <div 
-          className={`fixed inset-y-0 right-0 w-72 bg-gray-900 shadow-lg z-50 transition-transform duration-300 transform ${
+          className={`fixed inset-y-0 right-0 w-80 max-w-[85vw] bg-[#0d0d0d] border-l border-white/10 shadow-2xl shadow-black/50 transition-transform duration-300 ease-out ${
             isOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
           onClick={e => e.stopPropagation()}
         >
           <div className="flex flex-col h-full">
-            <div className="flex items-center justify-between p-4 border-b border-gray-700">
-              <span className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-white/10">
+              <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 text-transparent bg-clip-text">
                 Account
               </span>
               <button 
                 onClick={() => setIsOpen(false)} 
-                className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+                className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-300"
                 aria-label="Close menu"
               >
-                <X size={20} />
+                <X size={22} />
               </button>
             </div>
-            
-            {/* The main nav links are removed from here */}
-            <div className="flex-1 flex flex-col justify-end p-4">
+
+            {/* Account actions */}
+            <div className="flex-1 flex flex-col p-6 gap-2">
               {loggedIn ? (
-                <div className="space-y-2">
-                  <Link
-                    to="/profile"
-                    className="flex items-center gap-4 px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <span className="text-blue-400"><UserCircle size={18} /></span>
-                    <span>Profile</span>
-                  </Link>
+                <>
                   <button
-                    onClick={() => {
-                      handleLogout();
-                      setIsOpen(false);
-                    }}
-                    className="flex items-center gap-4 px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors w-full"
+                    onClick={() => { setIsOpen(false); navigate('/profile'); }}
+                    className="w-full px-5 py-4 text-left text-white bg-[#1a1a1a] hover:bg-[#222] transition-colors flex items-start gap-3 group rounded-xl"
                   >
-                    <span className="text-blue-400"><LogOut size={18} /></span>
-                    <span>Logout</span>
+                    <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20 transition-colors">
+                      <UserCircle size={18} />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-100">Profile</div>
+                      <div className="text-xs text-gray-400 mt-0.5">View your interview history</div>
+                    </div>
                   </button>
-                </div>
+                  <div className="h-px bg-white/10"></div>
+
+                  <button
+                    onClick={() => { setIsOpen(false); navigate('/help'); }}
+                    className="w-full px-5 py-4 text-left text-white bg-[#1a1a1a] hover:bg-[#222] transition-colors flex items-start gap-3 group rounded-xl"
+                  >
+                    <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20 transition-colors">
+                      <HelpCircle size={18} />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-100">Help & Support</div>
+                      <div className="text-xs text-gray-400 mt-0.5">FAQs and documentation</div>
+                    </div>
+                  </button>
+                  <div className="h-px bg-white/10"></div>
+
+                  <button
+                    onClick={() => { handleLogout(); setIsOpen(false); }}
+                    className="w-full px-5 py-4 text-left text-white bg-[#1a1a1a] hover:bg-[#2a0000] transition-colors flex items-start gap-3 group rounded-xl"
+                  >
+                    <div className="p-2 rounded-lg bg-red-500/10 text-red-400 group-hover:bg-red-500/20 transition-colors">
+                      <LogOut size={18} />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-100">Logout</div>
+                      <div className="text-xs text-gray-400 mt-0.5">Sign out of your account</div>
+                    </div>
+                  </button>
+                </>
               ) : (
                 <Link
                   to="/auth"
-                  className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity"
+                  className="flex items-center justify-center gap-3 w-full px-6 py-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-purple-500/25 hover:scale-[1.02] transition-all duration-300"
                   onClick={() => setIsOpen(false)}
                 >
-                  Login
+                  <UserCircle size={20} />
+                  <span>Login</span>
                 </Link>
               )}
             </div>

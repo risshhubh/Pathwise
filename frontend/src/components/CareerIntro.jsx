@@ -3,25 +3,64 @@ import { motion } from "framer-motion";
 
 export default function CareerIntro() {
   return (
-    <div className="flex flex-col justify-center items-start text-left p-10 h-full">
-      <motion.h1
-        className="text-5xl font-extrabold text-blue-400 mb-6"
-        initial={{ opacity: 0, x: -50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.8 }}
+    <div className="flex flex-col justify-center items-center text-center px-6 py-16 h-full w-full">
+      
+      {/* Friendly Emoji Intro */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.2, duration: 0.6 }}
+        className="text-6xl mb-6"
       >
-        Start Your Career Today 🚀
-      </motion.h1>
+              </motion.div>
+
+      {/* Headline */}
+      <motion.h2
+        className="text-4xl font-bold text-blue-500 mb-4"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.6 }}
+      >
+        Nervous About Interviews?
+      </motion.h2>
+
+      {/* Subheadline */}
       <motion.p
-        className="text-lg text-gray-300 max-w-lg leading-relaxed"
-        initial={{ opacity: 0, x: -30 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.3, duration: 0.8 }}
+        className="text-lg text-gray-400 max-w-xl leading-relaxed mb-10"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6, duration: 0.6 }}
       >
-        Pathwise is your AI-powered interview partner.  
-        Practice mock interviews, get instant feedback, and 
-        boost your confidence to land your dream job.
+        You’re not alone.  
+        Pathwise is like your personal practice buddy — helping you prep,  
+        learn from mistakes, and walk in confident. 🚀
       </motion.p>
+
+      {/* Step Style Cards with Glassmorphism */}
+      <div className="flex flex-col sm:flex-row gap-6 max-w-3xl">
+        {[
+          { emoji: "🤖", text: "Practice realistic AI mock interviews" },
+          { emoji: "📊", text: "Get instant feedback & tips" },
+          { emoji: "🎯", text: "Track your progress towards success" },
+        ].map((item, index) => (
+          <motion.div
+            key={index}
+            className="flex flex-col items-center justify-center 
+                       rounded-xl p-6 w-full
+                       bg-white/10 backdrop-blur-lg 
+                       border border-white/20 shadow-lg"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 + index * 0.2, duration: 0.6 }}
+          >
+            <span className="text-3xl mb-3">{item.emoji}</span>
+            <p className="text-white text-base font-medium">
+              {item.text}
+            </p>
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 }
+

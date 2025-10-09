@@ -1,62 +1,94 @@
-import React from "react";
+"use client";
+import React, { useRef } from "react";
+import { motion, useInView } from "framer-motion";
+import { Link } from "react-router-dom";
 
 export default function Footer() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-50px" });
+
+  // Animation variants
+  const container = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: 0.2, // delay between child animations
+      },
+    },
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 30 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
+  };
+
   return (
-    <footer className="bg-black text-gray-400 py-16 relative overflow-hidden">
-      {/* Matte decorative background shapes */}
+    <motion.footer
+      ref={ref}
+      variants={container}
+      initial="hidden"
+      animate={isInView ? "show" : "hidden"}
+      className="bg-black text-gray-400 py-16 relative overflow-hidden"
+    >
+      {/* Decorative blobs */}
       <div className="absolute top-0 left-0 w-96 h-96 bg-purple-700/20 rounded-full blur-3xl -z-10"></div>
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-700/20 rounded-full blur-3xl -z-10"></div>
 
-      <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-3 gap-10">
+      <motion.div
+        variants={container}
+        className="max-w-7xl mx-auto px-6 grid md:grid-cols-3 gap-10"
+      >
         {/* About / Branding */}
-        <div className="flex flex-col gap-4">
+        <motion.div variants={item} className="flex flex-col gap-4">
           <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
             Pathwise
           </h2>
-          <p className="text-gray-400 text-sm">
-            Helping you crack interviews with AI-powered mock sessions, resume tips, and progress tracking.  
-            Stay ahead and level up your career!
+          <p className="text-gray-400 text-sm leading-relaxed">
+            Helping you crack interviews with AI-powered mock sessions, resume tips, 
+            and progress tracking. Stay ahead and level up your career!
           </p>
-          {/* Social links as text */}
           <div className="flex gap-4 mt-2 text-sm">
-            <a href="#" className="hover:text-blue-400 transition-colors duration-300">GitHub</a>
+            <a href="https://github.com/risshhubh/Pathwise" className="hover:text-blue-400 transition-colors duration-300">GitHub</a>
             <a href="#" className="hover:text-blue-400 transition-colors duration-300">LinkedIn</a>
             <a href="#" className="hover:text-blue-400 transition-colors duration-300">Twitter</a>
           </div>
-        </div>
+        </motion.div>
 
         {/* Quick Links */}
-        <div className="flex flex-col gap-2">
+        <motion.div variants={item} className="flex flex-col gap-2">
           <h3 className="text-lg font-semibold text-white">Quick Links</h3>
-          <a href="#" className="hover:text-blue-400 transition-colors duration-300">Home</a>
-          <a href="#" className="hover:text-blue-400 transition-colors duration-300">Interview</a>
-          <a href="#" className="hover:text-blue-400 transition-colors duration-300">Dashboard</a>
-          <a href="#" className="hover:text-blue-400 transition-colors duration-300">About</a>
-        </div>
+          <Link to="/" className="hover:text-blue-400 transition-colors duration-300">Home</Link>
+          <Link to="/interview" className="hover:text-blue-400 transition-colors duration-300">Interview</Link>
+          <Link to="/dashboard" className="hover:text-blue-400 transition-colors duration-300">Dashboard</Link>
+          <Link to="/about" className="hover:text-blue-400 transition-colors duration-300">About</Link>
+        </motion.div>
 
         {/* Newsletter / Contact */}
-        <div className="flex flex-col gap-4">
+        <motion.div variants={item} className="flex flex-col gap-4">
           <h3 className="text-lg font-semibold text-white">Stay Updated</h3>
-          <p className="text-gray-400 text-sm">
+          <p className="text-gray-400 text-sm leading-relaxed">
             Subscribe to get the latest updates, tips, and AI features.
           </p>
           <div className="flex">
             <input
               type="email"
               placeholder="Your email"
-              className="flex-1 px-1 py-2 rounded-l-xl bg-black border border-gray-700 focus:outline-none focus:border-blue-400 text-gray-200"
+              className="flex-1 px-3 py-2 rounded-l-xl bg-black border border-gray-700 focus:outline-none focus:border-blue-400 text-gray-200 text-sm"
             />
-            <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-r-xl text-white font-semibold transition-transform hover:scale-105 cursor-pointer">
+            <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90 rounded-r-xl text-white font-semibold transition-transform hover:scale-105 cursor-pointer">
               Subscribe
             </button>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Bottom copyright */}
-      <div className="mt-12 border-t border-gray-700 pt-6 text-center text-gray-500 text-sm">
+      <motion.div
+        variants={item}
+        className="mt-12 border-t border-gray-700 pt-6 text-center text-gray-500 text-sm"
+      >
         © {new Date().getFullYear()} AI Interview Assistant. All rights reserved.
-      </div>
-    </footer>
+      </motion.div>
+    </motion.footer>
   );
 }

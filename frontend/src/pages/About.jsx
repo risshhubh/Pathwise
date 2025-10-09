@@ -1,5 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { useAuth } from "../context/AuthContext";
 
 const features = [
   {
@@ -32,24 +33,27 @@ const team = [
   {
     name: "Rishabh Srivastava",
     role: "Frontend Lead",
-    img: "https://randomuser.me/api/portraits/men/32.jpg",
+    img: "rishabh.jpg",
     bio: "Loves building beautiful, accessible user experiences.",
   },
   {
     name: "Mohd. Saqib",
     role: "Auth Lead",
-    img: "https://randomuser.me/api/portraits/men/68.jpg",
+    img: "saqib.jpg",
     bio: "Expert in secure authentication and user management systems.",
   },
   {
     name: "Shubh Kumar",
     role: "Backend Lead",
-    img: "https://randomuser.me/api/portraits/men/44.jpg",
+    img: "shubh.jpg",
     bio: "Passionate about scalable backend architectures and APIs.",
   },
 ];
 
 export default function About() {
+  const { user } = useAuth();
+  const userName = user?.name || "there";
+
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center py-24 px-4">
       <motion.div
@@ -62,7 +66,7 @@ export default function About() {
           About Pathwise
         </h1>
         <p className="text-lg text-gray-300 mb-4">
-          Our mission is to empower everyone to ace their interviews with confidence. We blend cutting-edge AI, expert content, and a supportive community to help you land your dream job.
+          Hi {userName}! Our mission is to empower everyone to ace their interviews with confidence. We blend cutting-edge AI, expert content, and a supportive community to help you land your dream job.
         </p>
         <motion.div
           initial={{ opacity: 0 }}

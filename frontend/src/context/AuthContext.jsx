@@ -7,32 +7,41 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    // Try to get token from localStorage on initial load
+    // Try to get user data from localStorage on initial load
     const token = localStorage.getItem("token");
-    if (token) {
+    const userData = localStorage.getItem("userData");
+    
+    console.log("AuthContext useEffect - token:", !!token, "userData:", !!userData);
+    
+    if (token && userData) {
       try {
-        // ✅ Use jwtDecode for both backend JWT & Google ID token
-        const decoded = jwtDecode(token);
-
-        const name =
-          decoded.name ||
-          (decoded.given_name
-            ? `${decoded.given_name} ${decoded.family_name || ""}`.trim()
-            : "");
-        const email = decoded.email || "";
-
-        setUser({ name, email });
-      } catch (e) {
-        // If decoding fails, fallback to stored userData
-        const userData =
-          JSON.parse(localStorage.getItem("userData")) ||
-          JSON.parse(localStorage.getItem("signupData") || "{}");
-
-        if (userData?.email) {
+        // Parse the stored user data (this contains name, email, picture)
+        const parsedUserData = JSON.parse(userData);
+        console.log("Parsed user data:", parsedUserData);
+        
+        if (parsedUserData?.email) {
           setUser({
-            name: userData.name || "",
-            email: userData.email || "",
+            name: parsedUserData.name || "",
+            email: parsedUserData.email || "",
+            picture: parsedUserData.picture || "",
           });
+          console.log("User set from localStorage:", parsedUserData.name);
+        }
+      } catch (e) {
+        console.error("Error parsing user data:", e);
+        // If parsing fails, try to decode token as fallback
+        try {
+          const decoded = jwtDecode(token);
+          const name =
+            decoded.name ||
+            (decoded.given_name
+              ? `${decoded.given_name} ${decoded.family_name || ""}`.trim()
+              : "");
+          const email = decoded.email || "";
+
+          setUser({ name, email });
+        } catch (tokenError) {
+          console.error("Error decoding token:", tokenError);
         }
       }
     }

@@ -80,7 +80,7 @@ const DashboardCard = ({ children, className }) => (
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const userName = user?.name || "";
+  const userName = user?.name || "there";
   const navigate = useNavigate();
 
   const handleStartMockInterview = () => {
