@@ -160,46 +160,93 @@ export default function CareerLanding() {
     </div>
   );
 }
-
-// 🪄 Feature Card Component
+// 🪄 Enhanced Feature Card Component
 const Card = ({ feature }) => {
   const navigate = useNavigate();
   const cardVariants = {
     hidden: { opacity: 0, y: 60 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.9, ease: "easeOut" } },
+    visible: { 
+      opacity: 1, 
+      y: 0, 
+      transition: { 
+        duration: 0.7, 
+        ease: [0.22, 1, 0.36, 1] // Custom easing for smoother animation
+      } 
+    },
   };
 
   return (
     <motion.div
       variants={cardVariants}
       onClick={() => feature.path && navigate(feature.path)}
-      className="relative group bg-white/5 backdrop-blur-xl border border-white/10 
-                 rounded-3xl shadow-lg p-8 hover:scale-[1.02] hover:border-white/20 cursor-pointer"
+      whileHover={{ y: -8 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      className="relative group bg-gradient-to-br from-white/10 via-white/5 to-transparent 
+                 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl p-8 
+                 cursor-pointer overflow-hidden"
     >
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
-        <div
-          className="absolute -inset-[2px] rounded-3xl bg-gradient-to-r 
-                     from-purple-500/20 via-blue-500/20 to-pink-500/20 blur-2xl"
-        />
+      {/* Animated gradient border on hover */}
+      <div className="absolute -inset-[1px] rounded-3xl bg-gradient-to-r from-purple-500/50 via-blue-500/50 to-pink-500/50 
+                      opacity-0 group-hover:opacity-100 blur-sm transition-all duration-700"></div>
+      
+      {/* Shine effect */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000">
+        <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] 
+                        bg-gradient-to-r from-transparent via-white/10 to-transparent 
+                        transition-transform duration-1000 ease-in-out"></div>
       </div>
 
-      <div
-        className="relative flex items-center justify-center w-14 h-14 
-                   rounded-2xl bg-gradient-to-tr from-purple-500/80 to-blue-500/80 
-                   text-white shadow-md transition-transform duration-500 
-                   group-hover:scale-110"
-      >
-        <feature.Icon className="w-7 h-7" />
+      {/* Background glow effect */}
+      <div className="absolute top-0 right-0 w-40 h-40 bg-purple-500/20 rounded-full blur-3xl 
+                      opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+      <div className="absolute bottom-0 left-0 w-40 h-40 bg-blue-500/20 rounded-full blur-3xl 
+                      opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+
+      {/* Card content wrapper */}
+      <div className="relative z-10">
+        {/* Icon container */}
+        <motion.div
+          whileHover={{ scale: 1.1, rotate: 5 }}
+          transition={{ type: "spring", stiffness: 400, damping: 15 }}
+          className="flex items-center justify-center w-16 h-16 mb-6
+                     rounded-2xl bg-gradient-to-br from-purple-500 via-blue-500 to-pink-500 
+                     text-white shadow-lg shadow-purple-500/50
+                     group-hover:shadow-xl group-hover:shadow-purple-500/70
+                     transition-shadow duration-500"
+        >
+          <feature.Icon className="w-8 h-8" strokeWidth={2} />
+        </motion.div>
+
+        {/* Text content */}
+        <div className="space-y-3">
+          <h3 className="text-2xl font-bold text-white tracking-tight
+                         group-hover:text-transparent group-hover:bg-clip-text 
+                         group-hover:bg-gradient-to-r group-hover:from-purple-300 
+                         group-hover:via-blue-300 group-hover:to-pink-300
+                         transition-all duration-500">
+            {feature.title}
+          </h3>
+          <p className="text-gray-300 leading-relaxed text-sm
+                        group-hover:text-white transition-colors duration-300">
+            {feature.description}
+          </p>
+        </div>
+
+        {/* Arrow indicator */}
+        <motion.div
+          initial={{ x: 0, opacity: 0 }}
+          whileHover={{ x: 5, opacity: 1 }}
+          className="absolute bottom-8 right-8 text-white/60 group-hover:text-white transition-colors duration-300"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+          </svg>
+        </motion.div>
       </div>
 
-      <div className="relative mt-6 space-y-3">
-        <h3 className="text-xl font-semibold text-white/90 tracking-wide">
-          {feature.title}
-        </h3>
-        <p className="text-gray-300/90 leading-relaxed text-sm">
-          {feature.description}
-        </p>
-      </div>
+      {/* Bottom accent line */}
+      <div className="absolute bottom-0 left-0 w-0 h-1 bg-gradient-to-r from-purple-500 via-blue-500 to-pink-500 
+                      group-hover:w-full transition-all duration-700 ease-out"></div>
     </motion.div>
   );
 };

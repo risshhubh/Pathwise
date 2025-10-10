@@ -87,9 +87,7 @@ const LightRays = ({
 
     const initializeWebGL = async () => {
       if (!containerRef.current) return;
-
       await new Promise(resolve => setTimeout(resolve, 10));
-
       if (!containerRef.current) return;
 
       const renderer = new Renderer({
@@ -147,14 +145,17 @@ float rayStrength(vec2 raySource, vec2 rayRefDirection, vec2 coord,
   float cosAngle = dot(dirNorm, rayRefDirection);
 
   float distortedAngle = cosAngle + distortion * sin(iTime * 2.0 + length(sourceToCoord) * 0.01) * 0.2;
-  
   float spreadFactor = pow(max(distortedAngle, 0.0), 1.0 / max(lightSpread, 0.001));
 
   float distance = length(sourceToCoord);
-  float maxDistance = iResolution.x * rayLength;
-  float lengthFalloff = clamp((maxDistance - distance) / maxDistance, 0.0, 1.0);
-  
-  float fadeFalloff = clamp((iResolution.x * fadeDistance - distance) / (iResolution.x * fadeDistance), 0.5, 1.0);
+
+  // ✅ Keep rays consistent on all screens
+  float referenceWidth = 1920.0;
+  float scaleFactor = max(iResolution.x, referenceWidth);
+
+  float maxDistance = scaleFactor * rayLength;
+  float fadeFalloff = clamp((scaleFactor * fadeDistance - distance) / (scaleFactor * fadeDistance), 0.5, 1.0);
+
   float pulse = pulsating > 0.5 ? (0.8 + 0.2 * sin(iTime * speed * 3.0)) : 1.0;
 
   float baseStrength = clamp(
@@ -163,12 +164,13 @@ float rayStrength(vec2 raySource, vec2 rayRefDirection, vec2 coord,
     0.0, 1.0
   );
 
+  float lengthFalloff = clamp(1.0 - distance / maxDistance, 0.0, 1.0);
   return baseStrength * lengthFalloff * fadeFalloff * spreadFactor * pulse;
 }
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord) {
   vec2 coord = vec2(fragCoord.x, iResolution.y - fragCoord.y);
-  
+
   vec2 finalRayDir = rayDir;
   if (mouseInfluence > 0.0) {
     vec2 mouseScreenPos = mousePos * iResolution.xy;
@@ -206,16 +208,14 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
 void main() {
   vec4 color;
   mainImage(color, gl_FragCoord.xy);
-  gl_FragColor  = color;
+  gl_FragColor = color;
 }`;
 
       const uniforms = {
         iTime: { value: 0 },
         iResolution: { value: [1, 1] },
-
         rayPos: { value: [0, 0] },
         rayDir: { value: [0, 1] },
-
         raysColor: { value: hexToRgb(raysColor) },
         raysSpeed: { value: raysSpeed },
         lightSpread: { value: lightSpread },
@@ -239,7 +239,6 @@ void main() {
         if (!containerRef.current || !renderer) return;
 
         renderer.dpr = Math.min(window.devicePixelRatio, 2);
-
         const { clientWidth: wCSS, clientHeight: hCSS } = containerRef.current;
         renderer.setSize(wCSS, hCSS);
 
@@ -255,28 +254,18 @@ void main() {
       };
 
       const loop = t => {
-        if (!rendererRef.current || !uniformsRef.current || !meshRef.current) {
-          return;
-        }
-
+        if (!rendererRef.current || !uniformsRef.current || !meshRef.current) return;
         uniforms.iTime.value = t * 0.001;
 
         if (followMouse && mouseInfluence > 0.0) {
           const smoothing = 0.92;
-
           smoothMouseRef.current.x = smoothMouseRef.current.x * smoothing + mouseRef.current.x * (1 - smoothing);
           smoothMouseRef.current.y = smoothMouseRef.current.y * smoothing + mouseRef.current.y * (1 - smoothing);
-
           uniforms.mousePos.value = [smoothMouseRef.current.x, smoothMouseRef.current.y];
         }
 
-        try {
-          renderer.render({ scene: mesh });
-          animationIdRef.current = requestAnimationFrame(loop);
-        } catch (error) {
-          console.warn('WebGL rendering error:', error);
-          return;
-        }
+        renderer.render({ scene: mesh });
+        animationIdRef.current = requestAnimationFrame(loop);
       };
 
       window.addEventListener('resize', updatePlacement);
@@ -290,18 +279,12 @@ void main() {
         }
 
         window.removeEventListener('resize', updatePlacement);
-
         if (renderer) {
           try {
             const canvas = renderer.gl.canvas;
             const loseContextExt = renderer.gl.getExtension('WEBGL_lose_context');
-            if (loseContextExt) {
-              loseContextExt.loseContext();
-            }
-
-            if (canvas && canvas.parentNode) {
-              canvas.parentNode.removeChild(canvas);
-            }
+            if (loseContextExt) loseContextExt.loseContext();
+            if (canvas && canvas.parentNode) canvas.parentNode.removeChild(canvas);
           } catch (error) {
             console.warn('Error during WebGL cleanup:', error);
           }
@@ -314,7 +297,6 @@ void main() {
     };
 
     initializeWebGL();
-
     return () => {
       if (cleanupFunctionRef.current) {
         cleanupFunctionRef.current();
