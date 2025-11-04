@@ -12,6 +12,7 @@ export default function AuthPage() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [message, setMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const { login } = useAuth();
 
@@ -22,6 +23,7 @@ export default function AuthPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
+    setIsLoading(true);
     try {
       const endpoint = isLogin ? "/login" : "/signup";
       const body = isLogin
@@ -43,9 +45,12 @@ export default function AuthPage() {
           ? "✅ Login successful! Redirecting..."
           : "✅ Signup successful! Welcome! Redirecting..."
       );
-      setTimeout(() => navigate("/"), 1000);
+      // Smooth transition - immediate redirect without delay
+      navigate("/");
     } catch {
       setMessage("❌ Server error. Please try again later.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -62,7 +67,8 @@ export default function AuthPage() {
       if (res.ok && data.token) {
         login(data.token, data.user);
         setMessage("✅ Google login successful! Redirecting...");
-        setTimeout(() => navigate("/"), 1000);
+        // Smooth transition - immediate redirect without delay
+        navigate("/");
       } else {
         setMessage(data.message || "❌ Google login failed");
       }
@@ -88,6 +94,7 @@ export default function AuthPage() {
       }}
       onGoogleSuccess={handleGoogleSuccess}
       onGoogleError={handleGoogleError}
+      isLoading={isLoading}
     />
   );
 }

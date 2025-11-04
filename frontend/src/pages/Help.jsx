@@ -1,10 +1,59 @@
 import React, { useState } from 'react';
 import { HelpCircle, Book, MessageCircle, Video, ChevronDown, ChevronUp, Search } from 'lucide-react';
 
+// 🔹 Popup Component for Contact Support
+const ContactSupportPopup = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="bg-gray-900 text-white rounded-2xl shadow-xl w-96 p-6 relative border border-gray-700">
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-400 hover:text-white text-lg"
+        >
+          ✕
+        </button>
+
+        {/* Header */}
+        <h2 className="text-2xl font-semibold mb-2 text-center">
+          Contact Support
+        </h2>
+        <p className="text-gray-400 text-center mb-6">
+          Our customer care executives are ready to help you.
+        </p>
+
+        {/* Action Buttons */}
+        <div className="space-y-3">
+          {/* Call */}
+          <button
+            onClick={() => (window.location.href = 'tel:+919219234185')}
+            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-3 rounded-lg transition-all font-medium"
+          >
+            📞 Call Executive
+          </button>
+
+          {/* WhatsApp */}
+          <button
+            onClick={() => window.open('https://wa.me/919219234185', '_blank')}
+            className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 px-4 py-3 rounded-lg transition-all font-medium"
+          >
+            💬 Chat on WhatsApp
+          </button>
+
+          
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Help = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSection, setActiveSection] = useState('faq');
   const [expandedFaq, setExpandedFaq] = useState(null);
+  const [isSupportOpen, setIsSupportOpen] = useState(false); // ✅ New state for popup
 
   const faqs = [
     {
@@ -53,41 +102,43 @@ const Help = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white pt-20 pb-12">
-      <div className="max-w-4xl mx-auto px-4">
-        {/* Help Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-4">How can we help you?</h1>
+    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-800 text-white pt-20 pb-12">
+      <div className="max-w-5xl mx-auto px-4">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-extrabold mb-4 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+            How can we help you?
+          </h1>
           <div className="relative max-w-xl mx-auto">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
               placeholder="Search for help..."
-              className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+              className="w-full pl-10 pr-4 py-3 bg-gray-800/60 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white backdrop-blur-sm"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <div className="flex gap-4 mb-6">
+        {/* Tabs */}
+        <div className="flex gap-4 justify-center mb-8">
           <button
             onClick={() => setActiveSection('faq')}
-            className={`px-4 py-2 rounded-lg ${
+            className={`px-5 py-2 rounded-full font-medium transition-colors duration-300 ${
               activeSection === 'faq'
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                ? 'bg-blue-600 shadow-lg shadow-blue-500/30 text-white'
+                : 'bg-gray-800 hover:bg-gray-700 text-gray-400'
             }`}
           >
-            Frequently Asked Questions
+            FAQs
           </button>
           <button
             onClick={() => setActiveSection('guides')}
-            className={`px-4 py-2 rounded-lg ${
+            className={`px-5 py-2 rounded-full font-medium transition-colors duration-300 ${
               activeSection === 'guides'
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                ? 'bg-blue-600 shadow-lg shadow-blue-500/30 text-white'
+                : 'bg-gray-800 hover:bg-gray-700 text-gray-400'
             }`}
           >
             Guides
@@ -100,24 +151,26 @@ const Help = () => {
             {filteredFaqs.map((faq, index) => (
               <div
                 key={index}
-                className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden"
+                className="bg-gray-800/60 backdrop-blur-sm rounded-lg border border-gray-700 transition-all hover:border-blue-500"
               >
                 <button
-                  className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-700"
+                  className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-800/80 transition-colors"
                   onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
                 >
-                  <span className="font-medium">{faq.question}</span>
+                  <span className="font-semibold text-lg">{faq.question}</span>
                   {expandedFaq === index ? (
-                    <ChevronUp size={20} className="text-gray-400" />
+                    <ChevronUp size={20} className="text-blue-400" />
                   ) : (
                     <ChevronDown size={20} className="text-gray-400" />
                   )}
                 </button>
-                {expandedFaq === index && (
-                  <div className="px-6 py-4 bg-gray-750 border-t border-gray-700">
-                    <p className="text-gray-300">{faq.answer}</p>
-                  </div>
-                )}
+                <div
+                  className={`px-6 overflow-hidden transition-all duration-300 ${
+                    expandedFaq === index ? 'max-h-60 py-4' : 'max-h-0 py-0'
+                  }`}
+                >
+                  <p className="text-gray-300 leading-relaxed">{faq.answer}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -129,14 +182,14 @@ const Help = () => {
             {guides.map((guide, index) => (
               <div
                 key={index}
-                className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:bg-gray-750 transition-colors cursor-pointer"
+                className="bg-gray-800/60 backdrop-blur-sm rounded-lg p-6 border border-gray-700 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-500/20 transition-all cursor-pointer"
               >
                 <div className="flex items-start gap-4">
-                  <div className="p-2 bg-gray-700 rounded-lg">
+                  <div className="p-3 bg-gray-700 rounded-lg">
                     {guide.icon}
                   </div>
                   <div>
-                    <h3 className="font-semibold mb-2">{guide.title}</h3>
+                    <h3 className="font-semibold text-lg mb-2">{guide.title}</h3>
                     <p className="text-gray-400 text-sm">{guide.description}</p>
                   </div>
                 </div>
@@ -145,15 +198,21 @@ const Help = () => {
           </div>
         )}
 
-        {/* Contact Support */}
-        <div className="mt-12 text-center">
-          <h2 className="text-xl font-semibold mb-4">Still need help?</h2>
-          <button className="inline-flex items-center gap-2 px-6 py-3 bg-blue-500 hover:bg-blue-600 rounded-lg font-medium transition-colors">
+        {/* Contact Support Button */}
+        <div className="mt-16 text-center">
+          <h2 className="text-2xl font-semibold mb-4">Still need help?</h2>
+          <button
+            onClick={() => setIsSupportOpen(true)}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90 rounded-full font-medium transition-all shadow-lg shadow-blue-500/30"
+          >
             <HelpCircle size={20} />
             Contact Support
           </button>
         </div>
       </div>
+
+      {/* Popup Component */}
+      <ContactSupportPopup isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} />
     </div>
   );
 };

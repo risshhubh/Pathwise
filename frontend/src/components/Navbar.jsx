@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import {
   Menu,
   X,
@@ -16,18 +17,14 @@ import {
 export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const [loggedIn, setLoggedIn] = useState(false);
   const [dropdown, setDropdown] = useState(false);
   const dropdownRef = useRef(null);
+  const isAuthPage = location.pathname === "/auth";
+  const loggedIn = !!user;
 
   useEffect(() => {
-    const updateAuthState = () => {
-      setLoggedIn(!!localStorage.getItem("token"));
-    };
-    updateAuthState();
-    window.addEventListener("storage", updateAuthState);
-
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setDropdown(false);
@@ -37,21 +34,22 @@ export default function Navbar() {
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
-      window.removeEventListener("storage", updateAuthState);
     };
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    setLoggedIn(false);
+    logout();
     setDropdown(false);
     navigate("/auth");
   };
 
-  const navLinks = [
+  const navLinks = loggedIn ? [
     { name: "Home", icon: <Home size={18} />, to: "/" },
     { name: "Interview", icon: <Users size={18} />, to: "/interview" },
     { name: "Dashboard", icon: <LayoutDashboard size={18} />, to: "/dashboard" },
+    { name: "About", icon: <BookOpen size={18} />, to: "/about" },
+  ] : [
+    { name: "Home", icon: <Home size={18} />, to: "/" },
     { name: "About", icon: <BookOpen size={18} />, to: "/about" },
   ];
 
@@ -75,12 +73,12 @@ export default function Navbar() {
                 <Link
                   key={link.name}
                   to={link.to}
-                  className={`cursor-pointer group relative px-4 py-2 rounded-lg transition-all duration-300 flex items-center gap-2 
+                  className={`cursor-pointer group relative px-4 py-2 rounded-lg transition-all duration-300 flex items-center gap-2
                     ${isActive ? "text-white bg-white/10" : "text-gray-300 hover:text-white hover:bg-white/5"}
                   `}
                 >
                   {link.icon}
-                  <span className="font-medium">{link.name}</span>
+                  <span className="font-semibold">{link.name}</span>
                   <span
                     className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 bg-gradient-to-r from-blue-400 to-purple-400 transition-all duration-300 
                     ${isActive ? "w-3/4" : "w-0 group-hover:w-3/4"}`}
@@ -91,110 +89,108 @@ export default function Navbar() {
           </div>
 
           {/* Desktop Account Section */}
-<div className="hidden lg:flex items-center">
-  {loggedIn ? (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={() => setDropdown((prev) => !prev)}
-        className={`group cursor-pointer flex items-center gap-3 px-6 py-2.5
-          rounded-full
-          backdrop-blur-md
-          bg-white/5
-          border border-white/10
-          text-white font-semibold
+<div className="hidden lg:flex items-center w-32 justify-end">
+  <div className="w-full flex justify-end">
+    {(!loggedIn && (location.pathname === "/" || location.pathname === "/about")) && (
+      <Link to="/auth">
+        <button
+          className="cursor-pointer px-6 py-2.5 rounded-full
+          bg-transparent border border-white/20
+          text-white font-semibold tracking-wide
           transition-all duration-300
           hover:bg-white/10
-          hover:shadow-[0_0_15px_rgba(168,85,247,0.25)]
-          hover:scale-[1.04]
-        `}
-        aria-label="Profile menu"
-      >
-        {/* Profile Icon with glow on hover */}
-        <div className="relative flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-white/10 group-hover:shadow-[0_0_15px_rgba(168,85,247,0.4)] transition-all duration-300">
-          <UserCircle size={20} className="text-white/90" />
-        </div>
+          hover:border-white/40"
+        >
+          Login
+        </button>
+      </Link>
+    )}
+    {loggedIn && !isAuthPage && (
+      <div className="relative" ref={dropdownRef}>
+        <button
+          onClick={() => setDropdown((prev) => !prev)}
+          className={`group cursor-pointer flex items-center gap-3 px-6 py-2.5
+            rounded-full
+            bg-transparent border border-white/20
+            text-white font-semibold tracking-wide
+            transition-all duration-300
+            hover:bg-white/10
+            hover:border-white/40
+          `}
+          aria-label="Profile menu"
+        >
+          {/* Profile Icon with glow on hover */}
+          <div className="relative flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-white/10 group-hover:shadow-[0_0_15px_rgba(168,85,247,0.4)] transition-all duration-300">
+            <UserCircle size={20} className="text-white/90" />
+          </div>
 
-        <span className="hidden sm:inline tracking-wide">Account</span>
+          <span className="hidden sm:inline tracking-wide">Account</span>
 
-        <ChevronDown
-          size={16}
-          className={`ml-1 transition-transform duration-300 ${
-            dropdown ? "rotate-180" : ""
-          }`}
-        />
-      </button>
+          <ChevronDown
+            size={16}
+            className={`ml-1 transition-transform duration-300 ${
+              dropdown ? "rotate-180" : ""
+            }`}
+          />
+        </button>
 
-      {dropdown && (
-        <div className="absolute right-0 mt-3 w-72 bg-[#0d0d0d]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/40 overflow-hidden">
-          <button
-            onClick={() => {
-              setDropdown(false);
-              navigate("/profile");
-            }}
-            className="cursor-pointer w-full px-5 py-4 text-left text-white bg-[#1a1a1a] hover:bg-[#222] transition-colors flex items-start gap-3 group"
-          >
-            <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20 transition-colors">
-              <UserCircle size={18} />
-            </div>
-            <div className="flex-1">
-              <div className="font-semibold text-gray-100">Profile</div>
-              <div className="text-xs text-gray-400 mt-0.5">
-                View your interview history
+        {dropdown && (
+          <div className="absolute right-0 mt-3 w-72 bg-[#0d0d0d]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/40 overflow-hidden">
+            <button
+              onClick={() => {
+                setDropdown(false);
+                navigate("/profile");
+              }}
+              className="cursor-pointer w-full px-5 py-4 text-left text-white bg-[#1a1a1a] hover:bg-[#222] transition-colors flex items-start gap-3 group"
+            >
+              <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20 transition-colors">
+                <UserCircle size={18} />
               </div>
-            </div>
-          </button>
-          <div className="h-px bg-white/10"></div>
-          <button
-            onClick={() => {
-              setDropdown(false);
-              navigate("/help");
-            }}
-            className="cursor-pointer w-full px-5 py-4 text-left text-white bg-[#1a1a1a] hover:bg-[#222] transition-colors flex items-start gap-3 group"
-          >
-            <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20 transition-colors">
-              <HelpCircle size={18} />
-            </div>
-            <div className="flex-1">
-              <div className="font-semibold text-gray-100">Help & Support</div>
-              <div className="text-xs text-gray-400 mt-0.5">
-                FAQs and documentation
+              <div className="flex-1">
+                <div className="font-semibold text-gray-100">Profile</div>
+                <div className="text-xs text-gray-400 mt-0.5">
+                  View your interview history
+                </div>
               </div>
-            </div>
-          </button>
-          <div className="h-px bg-white/10"></div>
-          <button
-            onClick={handleLogout}
-            className="cursor-pointer w-full px-5 py-4 text-left text-white bg-[#1a1a1a] hover:bg-[#2a0000] transition-colors flex items-start gap-3 group"
-          >
-            <div className="p-2 rounded-lg bg-red-500/10 text-red-400 group-hover:bg-red-500/20 transition-colors">
-              <LogOut size={18} />
-            </div>
-            <div className="flex-1">
-              <div className="font-semibold text-gray-100">Logout</div>
-              <div className="text-xs text-gray-400 mt-0.5">
-                Sign out of your account
+            </button>
+            <div className="h-px bg-white/10"></div>
+            <button
+              onClick={() => {
+                setDropdown(false);
+                navigate("/help");
+              }}
+              className="cursor-pointer w-full px-5 py-4 text-left text-white bg-[#1a1a1a] hover:bg-[#222] transition-colors flex items-start gap-3 group"
+            >
+              <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20 transition-colors">
+                <HelpCircle size={18} />
               </div>
-            </div>
-          </button>
-        </div>
-      )}
-    </div>
-  ) : (
-    <Link to="/auth">
-      <button
-        className="cursor-pointer px-6 py-2.5 rounded-full 
-        bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500
-        text-white font-semibold tracking-wide
-        shadow-lg shadow-purple-500/20
-        transition-all duration-300
-        hover:scale-[1.05]
-        hover:shadow-purple-500/40
-        hover:brightness-110"
-      >
-        Login
-      </button>
-    </Link>
-  )}
+              <div className="flex-1">
+                <div className="font-semibold text-gray-100">Help & Support</div>
+                <div className="text-xs text-gray-400 mt-0.5">
+                  FAQs and documentation
+                </div>
+              </div>
+            </button>
+            <div className="h-px bg-white/10"></div>
+            <button
+              onClick={handleLogout}
+              className="cursor-pointer w-full px-5 py-4 text-left text-white bg-[#1a1a1a] hover:bg-[#2a0000] transition-colors flex items-start gap-3 group"
+            >
+              <div className="p-2 rounded-lg bg-red-500/10 text-red-400 group-hover:bg-red-500/20 transition-colors">
+                <LogOut size={18} />
+              </div>
+              <div className="flex-1">
+                <div className="font-semibold text-gray-100">Logout</div>
+                <div className="text-xs text-gray-400 mt-0.5">
+                  Sign out of your account
+                </div>
+              </div>
+            </button>
+          </div>
+        )}
+      </div>
+    )}
+  </div>
 </div>
 
 
@@ -276,16 +272,16 @@ export default function Navbar() {
 
            {/* Account actions */}
 <div className="flex-1 flex flex-col p-5 gap-2 bg-[#0d0d0d]">
-  {loggedIn ? (
+  {loggedIn && !isAuthPage ? (
     <>
       <button
         onClick={() => {
           setIsOpen(false);
           navigate("/profile");
         }}
-        className="cursor-pointer w-full px-4 py-3 text-left text-white 
+        className="cursor-pointer w-full px-4 py-3 text-left text-white
         rounded-xl bg-[#1a1a1a] border border-white/10
-        hover:bg-[#222] hover:shadow-[0_0_10px_rgba(59,130,246,0.25)] 
+        hover:bg-[#222] hover:shadow-[0_0_10px_rgba(59,130,246,0.25)]
         transition-all duration-300 flex items-start gap-2 group"
       >
         <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20 transition-colors">
@@ -302,7 +298,7 @@ export default function Navbar() {
           setIsOpen(false);
           navigate("/help");
         }}
-        className="cursor-pointer w-full px-4 py-3 text-left text-white 
+        className="cursor-pointer w-full px-4 py-3 text-left text-white
         rounded-xl bg-[#1a1a1a] border border-white/10
         hover:bg-[#222] hover:shadow-[0_0_10px_rgba(168,85,247,0.25)]
         transition-all duration-300 flex items-start gap-2 group"
@@ -321,7 +317,7 @@ export default function Navbar() {
           handleLogout();
           setIsOpen(false);
         }}
-        className="cursor-pointer w-full px-4 py-3 text-left text-white 
+        className="cursor-pointer w-full px-4 py-3 text-left text-white
         rounded-xl bg-[#1a1a1a] border border-white/10
         hover:bg-[#2a0000] hover:shadow-[0_0_10px_rgba(239,68,68,0.35)]
         transition-all duration-300 flex items-start gap-2 group"
@@ -335,11 +331,11 @@ export default function Navbar() {
         </div>
       </button>
     </>
-  ) : (
+  ) : !loggedIn && (location.pathname === "/" || location.pathname === "/about") ? (
     <Link
       to="/auth"
-      className="cursor-pointer flex items-center justify-center gap-2 w-full px-6 py-3 
-      rounded-xl bg-gradient-to-r from-gray-200 to-gray-400 
+      className="cursor-pointer flex items-center justify-center gap-2 w-full px-6 py-3
+      rounded-xl bg-gradient-to-r from-gray-200 to-gray-400
       text-black font-semibold text-sm
       hover:scale-[1.02] hover:shadow-[0_0_10px_rgba(255,255,255,0.2)] transition-all duration-300"
       onClick={() => setIsOpen(false)}
@@ -347,7 +343,7 @@ export default function Navbar() {
       <UserCircle size={18} />
       <span>Login</span>
     </Link>
-  )}
+  ) : null}
 </div>
 
           </div>

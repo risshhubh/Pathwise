@@ -1,4 +1,6 @@
 "use client";
+import React, { useEffect, useState } from "react";
+import DashboardSkeleton from "../components/DashboardSkeleton";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
@@ -20,40 +22,58 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// --- Mock Data (replace with actual data from your backend) ---
-const performanceData = [
-  { name: "Interview 1", score: 65 },
-  { name: "Interview 2", score: 72 },
-  { name: "Interview 3", score: 70 },
-  { name: "Interview 4", score: 81 },
-  { name: "Interview 5", score: 85 },
-  { name: "Interview 6", score: 92 },
-];
+// --- Data helpers (derived from stored attempts) ---
+function loadAttempts() {
+  try {
+    const raw = localStorage.getItem("interview_attempts_v1");
+    const arr = raw ? JSON.parse(raw) : [];
+    const list = Array.isArray(arr) ? arr : [];
+    // Dedupe by composite key (type|mode|timestamp rounded to nearest second)
+    const seen = new Set();
+    const deduped = [];
+    for (const a of list) {
+      const key = `${a.type}|${a.mode}|${Math.round((a.timestamp || 0)/1000)}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      deduped.push(a);
+    }
+    return deduped;
+  } catch {
+    return [];
+  }
+}
 
-const recentInterviews = [
-  {
-    id: 1,
-    type: "Technical",
-    role: "Frontend Developer",
-    date: "2 days ago",
-    score: 92,
-  },
-  {
-    id: 2,
-    type: "Behavioral",
-    role: "Product Manager",
-    date: "4 days ago",
-    score: 85,
-  },
-  {
-    id: 3,
-    type: "System Design",
-    role: "Backend Engineer",
-    date: "1 week ago",
-    score: 81,
-  },
-];
-// --- End of Mock Data ---
+function aggregateByType(attempts) {
+  const types = ["technical", "behavioral", "system-design"];
+  const agg = Object.fromEntries(types.map((t) => [t, { count: 0, scores: [] }]));
+  attempts.forEach((a) => {
+    if (!agg[a.type]) return;
+    agg[a.type].count += 1;
+    if (typeof a.scorePercent === "number") agg[a.type].scores.push(a.scorePercent);
+  });
+  const typeAverages = types.map((t) => {
+    const item = agg[t];
+    const avg = item.scores.length
+      ? Math.round(item.scores.reduce((s, v) => s + v, 0) / item.scores.length)
+      : 0; // 0 if no progress
+    const label = t === "system-design" ? "System Design" : t.charAt(0).toUpperCase() + t.slice(1);
+    return { type: t, label, average: avg, attempts: item.count };
+  });
+  return typeAverages;
+}
+
+function recentFromAttempts(attempts) {
+  const last = [...attempts]
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, 5)
+    .map((a, i) => ({
+      id: i + 1,
+      type: a.type === "system-design" ? "System Design" : a.type.charAt(0).toUpperCase() + a.type.slice(1),
+      date: new Date(a.timestamp).toLocaleString(),
+      score: typeof a.scorePercent === "number" ? a.scorePercent : "—",
+    }));
+  return last;
+}
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -83,9 +103,37 @@ export default function Dashboard() {
   const userName = user?.name || "there";
   const navigate = useNavigate();
 
-  const handleStartMockInterview = () => {
-    navigate("/interview");
-  };
+  // Load attempts and keep them reactive on local changes and custom events
+  const [attempts, setAttempts] = useState(() => loadAttempts());
+
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === 'interview_attempts_v1') setAttempts(loadAttempts());
+    };
+    const onUpdated = () => setAttempts(loadAttempts());
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('attempts-updated', onUpdated);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('attempts-updated', onUpdated);
+    };
+  }, []);
+
+  const typeAgg = aggregateByType(attempts);
+  const recentInterviews = recentFromAttempts(attempts);
+  const overallScores = attempts.filter(a => typeof a.scorePercent === 'number').map(a => a.scorePercent);
+  const overallAverage = overallScores.length ? Math.round(overallScores.reduce((s,v)=>s+v,0)/overallScores.length) : 0;
+  const totalInterviews = attempts.length;
+
+  // Time-series of last scored attempts for the chart
+  const lastScores = overallScores.slice(-8);
+  const startIndex = overallScores.length - lastScores.length;
+  const performanceData = lastScores.map((score, idx) => ({ name: `Attempt ${startIndex + idx + 1}`, score }));
+
+  // Hydration flag for skeleton fallback
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => { setHydrated(true); }, []);
+  if (!hydrated) return <DashboardSkeleton />;
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -145,13 +193,16 @@ export default function Dashboard() {
               </div>
             </DashboardCard>
 
-            {/* Recent Activity */}
+            {/* Recent Activity (real attempts only; empty -> 0 progress) */}
             <DashboardCard>
               <h2 className="text-xl font-semibold mb-4 flex items-center">
                 <Book className="mr-3 h-5 w-5 text-purple-400" />
                 Recent Activity
               </h2>
               <ul className="space-y-4">
+                {recentInterviews.length === 0 && (
+                  <li className="p-3 bg-white/5 rounded-lg text-gray-400">No interviews yet.</li>
+                )}
                 {recentInterviews.map((interview) => (
                   <li
                     key={interview.id}
@@ -159,9 +210,7 @@ export default function Dashboard() {
                   >
                     <div>
                       <p className="font-medium">{interview.type} Interview</p>
-                      <p className="text-sm text-gray-400">
-                        {interview.role} • {interview.date}
-                      </p>
+                      <p className="text-sm text-gray-400">{interview.date}</p>
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-lg text-purple-400">
@@ -180,20 +229,18 @@ export default function Dashboard() {
             <DashboardCard>
               <h2 className="text-xl font-semibold mb-4 flex items-center">
                 <LayoutGrid className="mr-3 h-5 w-5 text-purple-400" />
-                Quick Actions
+                Interview Strengths
               </h2>
-              <div className="space-y-3">
-                <button
-                  className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition-colors cursor-pointer"
-                  onClick={handleStartMockInterview}
-                >
-                  <Bot className="h-5 w-5" />
-                  Start AI Mock Interview
-                </button>
-                <button className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold transition-colors cursor-pointer">
-                  <FileText className="h-5 w-5" />
-                  Go to Resume Builder
-                </button>
+              <div className="space-y-4">
+                {typeAgg.map((t) => (
+                  <div key={t.type} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                    <div className="font-medium">{t.label}</div>
+                    <div className="text-right">
+                      <div className="text-purple-400 font-bold">{t.average}%</div>
+                      <div className="text-xs text-gray-500">{t.attempts} {t.attempts === 1 ? 'attempt' : 'attempts'}</div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </DashboardCard>
             <DashboardCard>
@@ -204,15 +251,15 @@ export default function Dashboard() {
               <div className="space-y-3">
                 <p className="flex justify-between">
                   <span className="text-gray-400">Interviews Completed</span>
-                  <span className="font-bold">6</span>
+                  <span className="font-bold">{totalInterviews}</span>
                 </p>
                 <p className="flex justify-between">
                   <span className="text-gray-400">Average Score</span>
-                  <span className="font-bold">81%</span>
+                  <span className="font-bold">{overallAverage}%</span>
                 </p>
                 <p className="flex justify-between">
                   <span className="text-gray-400">Hours Practiced</span>
-                  <span className="font-bold">12.5</span>
+                  <span className="font-bold">0</span>
                 </p>
               </div>
             </DashboardCard>
