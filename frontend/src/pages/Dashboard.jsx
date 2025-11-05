@@ -22,25 +22,10 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// --- Data helpers (derived from stored attempts) ---
-function loadAttempts() {
-  try {
-    const raw = localStorage.getItem("interview_attempts_v1");
-    const arr = raw ? JSON.parse(raw) : [];
-    const list = Array.isArray(arr) ? arr : [];
-    // Dedupe by composite key (type|mode|timestamp rounded to nearest second)
-    const seen = new Set();
-    const deduped = [];
-    for (const a of list) {
-      const key = `${a.type}|${a.mode}|${Math.round((a.timestamp || 0)/1000)}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      deduped.push(a);
-    }
-    return deduped;
-  } catch {
-    return [];
-  }
+// --- Data helpers (derived from API attempts) ---
+function loadAttemptsFromAPI(user) {
+  // This will be handled in the component
+  return [];
 }
 
 function aggregateByType(attempts) {
@@ -103,21 +88,31 @@ export default function Dashboard() {
   const userName = user?.name || "there";
   const navigate = useNavigate();
 
-  // Load attempts and keep them reactive on local changes and custom events
-  const [attempts, setAttempts] = useState(() => loadAttempts());
+  // Load attempts from API
+  const [attempts, setAttempts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const onStorage = (e) => {
-      if (e.key === 'interview_attempts_v1') setAttempts(loadAttempts());
+    const fetchAttempts = async () => {
+      if (!user) return;
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch("http://localhost:5000/api/progress/attempts", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setAttempts(data);
+        }
+      } catch (error) {
+        console.error("Error fetching attempts:", error);
+      } finally {
+        setLoading(false);
+      }
     };
-    const onUpdated = () => setAttempts(loadAttempts());
-    window.addEventListener('storage', onStorage);
-    window.addEventListener('attempts-updated', onUpdated);
-    return () => {
-      window.removeEventListener('storage', onStorage);
-      window.removeEventListener('attempts-updated', onUpdated);
-    };
-  }, []);
+
+    fetchAttempts();
+  }, [user]);
 
   const typeAgg = aggregateByType(attempts);
   const recentInterviews = recentFromAttempts(attempts);
@@ -133,7 +128,7 @@ export default function Dashboard() {
   // Hydration flag for skeleton fallback
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => { setHydrated(true); }, []);
-  if (!hydrated) return <DashboardSkeleton />;
+  if (!hydrated || loading) return <DashboardSkeleton />;
 
   return (
     <div className="min-h-screen bg-black text-white">

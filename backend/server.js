@@ -29,3 +29,7 @@ app.use("/api/jobs", jobRoutes);
 //Application Routes
 const applicationRoutes = require("./routes/applicationRoutes");
 app.use("/api/applications", applicationRoutes);
+
+//Progress Routes
+const progressRoutes = require("./routes/progressRoutes");
+app.use("/api/progress", progressRoutes);

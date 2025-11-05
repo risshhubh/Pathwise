@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Bot, ListChecks, Code2, BookOpenCheck, ChevronLeft, ChevronRight, CheckCircle2, XCircle, RotateCcw } from "lucide-react";
 import { useToast } from "../components/ToastProvider";
 import InterviewRoomSkeleton from "../components/InterviewRoomSkeleton";
+import { useAuth } from "../context/AuthContext";
 
 const MODES = [
   { id: "mcq", label: "MCQ Based", icon: ListChecks },
@@ -147,6 +148,7 @@ export default function InterviewRoom() {
   const query = useQuery();
   const navigate = useNavigate();
   const { push } = useToast();
+  const { user } = useAuth();
   const interviewType = (query.get("type") || "technical").toLowerCase();
 
   const [mode, setMode] = useState(null); // mcq | coding | quiz
@@ -158,6 +160,10 @@ export default function InterviewRoom() {
   const [showWarning, setShowWarning] = useState(false);
   const QUESTION_TIME = 60; // seconds per question
   const [timeLeft, setTimeLeft] = useState(QUESTION_TIME);
+  const [userAttempts, setUserAttempts] = useState([]);
+  const [lastReport, setLastReport] = useState(null);
+  const [practicePlan, setPracticePlan] = useState(null);
+  const [loadingAttempts, setLoadingAttempts] = useState(false);
 
   // Ensure each mode has 15 questions by padding from seeds
   const questions = useMemo(() => {
@@ -233,15 +239,13 @@ export default function InterviewRoom() {
     return allIds.length > 0 && allIds.every(id => submittedMap[id]);
   };
 
-  const persistAttemptIfFinished = (submittedMap) => {
+  const persistAttemptIfFinished = async (submittedMap) => {
     const finished = computeFinished(submittedMap);
     if (!finished) return;
     if (attemptSavedRef.current) return;
     attemptSavedRef.current = true;
     setSubmitted(true);
     try {
-      const attemptsRaw = localStorage.getItem("interview_attempts_v1");
-      const attempts = attemptsRaw ? JSON.parse(attemptsRaw) : [];
       const ts = Date.now();
       let percent = null;
       if (mode === "mcq") {
@@ -254,22 +258,71 @@ export default function InterviewRoom() {
         });
         percent = Math.round((correct / questions.length) * 100);
       }
-      // Prevent accidental duplicate records: compare with last attempt
-      const last = attempts[attempts.length - 1];
-      const isDup = last && last.type === interviewType && last.mode === mode && Math.abs(ts - last.timestamp) < 1500;
-      if (!isDup) {
-        attempts.push({ type: interviewType, mode, timestamp: ts, scorePercent: percent });
-      }
-      localStorage.setItem("interview_attempts_v1", JSON.stringify(attempts));
       // Build a lightweight post-interview report and practice plan
       const report = buildReport({ interviewType, mode, questions, answers, optionMap, mcqPercent: percent });
-      localStorage.setItem("last_report_v1", JSON.stringify({ ...report, timestamp: ts }));
       const plan = buildPracticePlan(report);
-      localStorage.setItem("practice_plan_v1", JSON.stringify(plan));
-      // Notify other parts of the app (e.g., Dashboard) to refresh
-      try { window.dispatchEvent(new CustomEvent('attempts-updated')); } catch {}
-      try { push("Interview attempt saved! View your updated progress on the dashboard.", { type: "success" }); } catch {}
-    } catch {}
+
+      // Save to backend API
+      const payload = {
+        type: interviewType,
+        mode,
+        scorePercent: percent,
+        answers,
+        report,
+        plan,
+      };
+      const response = await fetch('http://localhost:5000/api/progress/save-attempt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (response.ok) {
+        // Save report and plan to localStorage for UI display
+        localStorage.setItem("last_report_v1", JSON.stringify({ ...report, timestamp: ts }));
+        localStorage.setItem("practice_plan_v1", JSON.stringify(plan));
+        // Notify other parts of the app (e.g., Dashboard) to refresh
+        try { window.dispatchEvent(new CustomEvent('attempts-updated')); } catch {}
+        try { push("Interview attempt saved successfully! View your updated progress on the dashboard.", { type: "success" }); } catch {}
+      } else {
+        throw new Error('Failed to save attempt to backend');
+      }
+    } catch (error) {
+      console.error('Error saving attempt:', error);
+      // Fallback: save to localStorage if API fails
+      try {
+        const attemptsRaw = localStorage.getItem("interview_attempts_v1");
+        const attempts = attemptsRaw ? JSON.parse(attemptsRaw) : [];
+        const ts = Date.now();
+        let percent = null;
+        if (mode === "mcq") {
+          let correct = 0;
+          questions.forEach((q) => {
+            const mapped = optionMap[q.id];
+            const ans = answers[q.id];
+            const correctIndex = mapped ? mapped.answerIndex : q.answerIndex;
+            if (typeof ans === "number" && ans === correctIndex) correct += 1;
+          });
+          percent = Math.round((correct / questions.length) * 100);
+        }
+        const last = attempts[attempts.length - 1];
+        const isDup = last && last.type === interviewType && last.mode === mode && Math.abs(ts - last.timestamp) < 1500;
+        if (!isDup) {
+          attempts.push({ type: interviewType, mode, timestamp: ts, scorePercent: percent });
+        }
+        localStorage.setItem("interview_attempts_v1", JSON.stringify(attempts));
+        const report = buildReport({ interviewType, mode, questions, answers, optionMap, mcqPercent: percent });
+        localStorage.setItem("last_report_v1", JSON.stringify({ ...report, timestamp: ts }));
+        const plan = buildPracticePlan(report);
+        localStorage.setItem("practice_plan_v1", JSON.stringify(plan));
+        try { window.dispatchEvent(new CustomEvent('attempts-updated')); } catch {}
+        try { push("Interview attempt saved locally! View your updated progress on the dashboard.", { type: "success" }); } catch {}
+      } catch (fallbackError) {
+        console.error('Fallback save failed:', fallbackError);
+      }
+    }
   };
 
   function scoreClarityFromText(text) {
@@ -571,6 +624,15 @@ export default function InterviewRoom() {
                       );
                       });
                     })()}
+
+                    {!questionSubmitted[current.id] && typeof answers[current.id] === 'number' && (
+                      <button
+                        onClick={submitCurrentQuestion}
+                        className="cursor-pointer w-full px-4 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-cyan-600 hover:opacity-90 text-white font-semibold"
+                      >
+                        Submit Answer
+                      </button>
+                    )}
 
                     {questionSubmitted[current.id] && current.explanation && (
                       <div className="mt-3 text-sm text-gray-300 bg-white/5 border border-gray-700 rounded-lg p-3">
