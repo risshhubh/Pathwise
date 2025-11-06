@@ -9,7 +9,7 @@ const features = [
   { id: 1, title: "Resume Analyzer", description: "Get instant, AI-powered feedback to optimize your resume and land more interviews.", Icon: FileScan, path: "/resume-analyzer" },
   { id: 2, title: "AI Mock Interviews", description: "Practice your interview skills with a realistic AI, covering both technical and behavioral questions.", Icon: Bot, path: "/interview" },
   { id: 3, title: "Personalized Roadmap", description: "Receive a custom learning path with curated resources to achieve your specific career goals.", Icon: Map, path: "/personalized-roadmap" },
-  { id: 4, title: "Progress Tracker", description: "Visualize your growth with detailed analytics on your skills, interview performance, and progress.", Icon: TrendingUp, path: "/tracker" },
+  { id: 4, title: "Progress Tracker", description: "Visualize your growth with detailed analytics on your skills, interview performance, and progress.", Icon: TrendingUp, path: "/dashboard" },
 ];
 
 export default function CareerLanding() {
@@ -167,16 +167,11 @@ const HowItWorksSection = () => {
 // 🆕 Testimonials Section
 const TestimonialsSection = () => {
   const ref = React.useRef(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] });
-  
-  const y1 = useTransform(scrollYProgress, [0, 1], [-100, 100]);
-  const y2 = useTransform(scrollYProgress, [0, 1], [50, -50]);
-  const y3 = useTransform(scrollYProgress, [0, 1], [-50, 50]);
 
   const testimonials = [
-    { name: "Sarah J.", role: "Software Engineer @ Google", quote: "The AI mock interviews were a game-changer. The feedback helped me correct mistakes I didn't even know I was making.", y: y1 },
-    { name: "Michael B.", role: "Product Manager @ Amazon", quote: "I went from getting no replies to landing multiple offers. The resume analyzer instantly showed me what was wrong.", y: y2 },
-    { name: "Emily L.", role: "UX Designer @ Microsoft", quote: "The personalized roadmap cut my prep time in half. It gave me the exact skills and projects I needed to focus on.", y: y3 },
+    { name: "Sarah J.", role: "Software Engineer @ Google", quote: "The AI mock interviews were a game-changer. The feedback helped me correct mistakes I didn't even know I was making." },
+    { name: "Michael B.", role: "Product Manager @ Amazon", quote: "I went from getting no replies to landing multiple offers. The resume analyzer instantly showed me what was wrong." },
+    { name: "Emily L.", role: "UX Designer @ Microsoft", quote: "The personalized roadmap cut my prep time in half. It gave me the exact skills and projects I needed to focus on." },
   ];
   
   return (
@@ -188,7 +183,14 @@ const TestimonialsSection = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
         {testimonials.map((t, i) => (
-          <motion.div key={i} style={{y: t.y}} className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-8 flex flex-col items-start">
+          <motion.div 
+            key={i} 
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: i * 0.2 }}
+            viewport={{ once: true }}
+            className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-8 flex flex-col items-start"
+          >
             <Quote className="text-fuchsia-400 w-10 h-10 mb-4" strokeWidth={1.5}/>
             <p className="text-gray-300 mb-6 flex-grow">"{t.quote}"</p>
             <div>

@@ -102,6 +102,34 @@ export const AuthProvider = ({ children }) => {
     return userObj;
   };
 
+  const refreshUserData = async () => {
+    const token = localStorage.getItem("token");
+    if (!token || !user) return;
+
+    try {
+      const response = await fetch("http://localhost:5000/api/user/profile", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const profileData = await response.json();
+        const updatedUser = {
+          name: profileData.name || "",
+          email: profileData.email || "",
+          picture: profileData.picture || "",
+          phone: profileData.phone || "",
+          location: profileData.location || "",
+          course: profileData.course || "",
+          interviewsCompleted: profileData.interviewsCompleted || 0,
+          averageScore: profileData.averageScore || 0,
+        };
+        setUser(updatedUser);
+        localStorage.setItem("userData", JSON.stringify(profileData));
+      }
+    } catch (error) {
+      console.error("Error refreshing user data:", error);
+    }
+  };
+
   const logout = () => {
     if (inactivityTimerRef.current) {
       clearTimeout(inactivityTimerRef.current);
@@ -113,7 +141,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, refreshUserData }}>
       {children}
     </AuthContext.Provider>
   );

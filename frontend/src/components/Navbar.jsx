@@ -57,13 +57,17 @@ export default function Navbar() {
     <nav className="fixed top-0 left-0 w-full z-50 backdrop-blur-xl bg-black/40 border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <Link
-            to="/"
-            className="cursor-pointer text-xl sm:text-2xl font-extrabold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 text-transparent bg-clip-text hover:scale-105 transition-transform"
-          >
-            Pathwise
-          </Link>
+          {/* Logo & Subtitle wrapped and sized */}
+          <div className="flex flex-col justify-center items-start h-full" style={{ minWidth: '120px', maxWidth: '180px' }}>
+            <Link to="/" className="group inline-block cursor-pointer" style={{ textDecoration: 'none' }}>
+              <span className="text-[#43bfc7] font-bold" style={{ fontSize: '1.35rem', letterSpacing: '1.5px', textShadow: '0 2px 8px rgba(38,79,78,0.3)', fontFamily: 'Montserrat, Arial, sans-serif', filter: 'contrast(1.5) brightness(1.2)', lineHeight: 1.1, display: 'block', textAlign: 'left', whiteSpace: 'nowrap' }}>
+                <span className="inline-block transform transition-transform duration-200 group-hover:-rotate-3">Pathwise</span>
+              </span>
+              <span className="text-[#43bfc7]" style={{ fontSize: '0.75rem', fontWeight: 500, opacity: 0.8, marginTop: '2px', letterSpacing: '1px', fontFamily: 'Montserrat, Arial, sans-serif', lineHeight: 1.1, display: 'block', textAlign: 'left', whiteSpace: 'nowrap' }}>
+                <span className="inline-block transition-colors duration-200 group-hover:opacity-100 group-hover:text-white/90">AI Job Portal</span>
+              </span>
+            </Link>
+          </div>
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-2">

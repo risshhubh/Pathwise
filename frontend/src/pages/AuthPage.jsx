@@ -40,6 +40,7 @@ export default function AuthPage() {
       if (!res.ok) return setMessage(data.message || "Something went wrong");
 
       login(data.token, data.user);
+      localStorage.setItem("justLoggedIn", "true");
       setMessage(
         isLogin
           ? "✅ Login successful! Redirecting..."
@@ -66,6 +67,7 @@ export default function AuthPage() {
       const data = await res.json();
       if (res.ok && data.token) {
         login(data.token, data.user);
+        localStorage.setItem("justLoggedIn", "true");
         setMessage("✅ Google login successful! Redirecting...");
         // Smooth transition - immediate redirect without delay
         navigate("/");

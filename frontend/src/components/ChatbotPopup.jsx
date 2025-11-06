@@ -2,66 +2,15 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiSend, FiX, FiRefreshCw } from "react-icons/fi";
+import { FiSend, FiX, FiRefreshCw, FiMic } from "react-icons/fi";
+import { useAuth } from "../context/AuthContext";
+import { findResponse, getQuickLinks, startVoiceInput } from "../utils/chatbotUtils";
 
 // --- API Key for Weather ---
 const WEATHER_API_KEY = "YOUR_OPENWEATHERMAP_API_KEY"; // 🔑 Replace this with your key
 
 // --- Default Messages ---
-const DEFAULT_MESSAGES = [
-  { sender: "bot", text: "Hi 👋 I'm InterviewBot — ask me about interviews, resumes, or even the weather!" },
-];
-
-// --- Static FAQ ---
-const FAQ = [
-  { keywords: ["hi", "hello", "hey"], responses: ["Hey there 👋 How can I help you today? Interview tips or resume advice?"] },
-  { keywords: ["interview", "tips", "prepare", "how to prepare"], responses: [
-    "💼 Preparation Tip: Research the company, know your projects, and practice STAR (Situation, Task, Action, Result) answers.",
-    "🧠 Mock interviews are great! I can simulate HR or technical rounds if you’d like."
-  ]},
-  { keywords: ["resume", "cv"], responses: [
-    "📄 Resume Tip: Keep it short, show measurable results, and tailor it to each job role.",
-    "💡 Highlight achievements, not just duties — like 'Reduced processing time by 40%' instead of 'Managed files'."
-  ]},
-  { keywords: ["behavioral", "tell me about yourself", "strength", "weakness"], responses: [
-    "💬 Behavioral questions test attitude and fit. Use the STAR method (Situation, Task, Action, Result) for clear, structured answers.",
-    "🧭 Example: 'My strength is adaptability — I quickly learn and adjust to new technologies or workflows.'"
-  ]},
-  { keywords: ["technical", "coding", "data structure", "algorithm"], responses: [
-    "💻 Focus on core DSA — arrays, linked lists, trees, recursion, and dynamic programming.",
-    "⚙️ Also, explain your logic aloud during interviews. Clarity beats speed!"
-  ]},
-  { keywords: ["mock", "simulate", "practice"], responses: [
-    "🎭 I can simulate a mock interview — HR or Technical. Which one do you want to try?"
-  ]},
-  { keywords: ["projects", "portfolio"], responses: [
-    "🚀 Showcase 2-3 strong projects. Explain your role, tech stack, and challenges you solved.",
-    "📁 Use GitHub or a portfolio site — employers love seeing clean, well-documented code."
-  ]},
-  { keywords: ["communication", "soft skills"], responses: [
-    "🗣️ Soft skills matter too — clarity, confidence, and empathy. Practice explaining technical topics simply."
-  ]},
-  { keywords: ["ai", "artificial intelligence", "ml", "machine learning"], responses: [
-    "🤖 AI Interview Tip: Brush up on regression, classification, model evaluation metrics, and overfitting prevention.",
-    "🧠 ML-focused roles often expect you to explain projects — data preprocessing, model choice, and results."
-  ]},
-  { keywords: ["thanks", "thank you", "thx"], responses: ["You’re welcome! 😊 Glad I could help.", "Anytime! Wishing you success 🚀"] },
-  { keywords: ["bye", "goodbye", "see you"], responses: ["Goodbye 👋 Stay confident and keep practicing!"] },
-];
-
-// --- Helper: Find Matching Response ---
-function findResponse(text) {
-  if (!text) return null;
-  const norm = text.toLowerCase();
-  for (let item of FAQ) {
-    for (let kw of item.keywords) {
-      if (norm.includes(kw)) {
-        return item.responses[Math.floor(Math.random() * item.responses.length)];
-      }
-    }
-  }
-  return null;
-}
+const DEFAULT_MESSAGES = [];
 
 // --- Weather API Fetch ---
 async function getWeather() {
@@ -80,6 +29,7 @@ async function getWeather() {
 }
 
 export default function ChatbotPopup() {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState(() => {
     try {
@@ -92,6 +42,21 @@ export default function ChatbotPopup() {
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
   const listRef = useRef(null);
+
+  useEffect(() => {
+    if (user && localStorage.getItem("justLoggedIn") === "true") {
+      localStorage.removeItem("justLoggedIn");
+      // Clear previous messages on login
+      setMessages([]);
+      try { localStorage.removeItem("chat_messages_v1"); } catch {}
+      const hour = new Date().getHours();
+      let greeting = "Good morning";
+      if (hour >= 12 && hour < 17) greeting = "Good afternoon";
+      else if (hour >= 17) greeting = "Good evening";
+      pushMessage({ sender: "bot", text: `${greeting}, ${user.name || "there"}! 👋 I'm InterviewBot — ask me about interviews, resumes, or Pathwise features!` });
+      setOpen(true);
+    }
+  }, [user]);
 
   useEffect(() => {
     try {
@@ -115,7 +80,7 @@ export default function ChatbotPopup() {
     setTyping(true);
 
     setTimeout(async () => {
-      let reply = findResponse(text);
+      let reply = findResponse(text, user);
 
       // Weather Logic
       if (text.toLowerCase().includes("weather") || text.toLowerCase().includes("temperature")) {
@@ -123,11 +88,18 @@ export default function ChatbotPopup() {
       }
 
       if (!reply)
-        reply = "🤔 Hmm, I didn’t get that. Try asking about interviews, resumes, or say 'weather'.";
+        reply = "🤔 Hmm, I didn’t get that. Try asking about interviews, resumes, or Pathwise features.";
 
       pushMessage({ sender: "bot", text: reply });
       setTyping(false);
     }, 1000);
+  }
+
+  function handleVoiceInput() {
+    startVoiceInput((transcript) => {
+      setInput(transcript);
+      send(); // Auto-send after voice input
+    });
   }
 
   return (
@@ -180,14 +152,14 @@ export default function ChatbotPopup() {
                     try { localStorage.removeItem("chat_messages_v1"); } catch {}
                   }}
                   title="Clear chat"
-                  className="p-1.5 rounded-full text-gray-400 hover:bg-white/10 hover:text-white transition-colors"
+                  className="p-1.5 rounded-full text-gray-400 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
                 >
                   <FiRefreshCw size={16} />
                 </button>
                 <button 
                   onClick={() => setOpen(false)} 
                   aria-label="Close chat" 
-                  className="p-1.5 rounded-full text-gray-400 hover:bg-white/10 hover:text-white transition-colors"
+                  className="p-1.5 rounded-full text-gray-400 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
                 >
                   <FiX size={18} />
                 </button>
@@ -196,27 +168,46 @@ export default function ChatbotPopup() {
 
             {/* Messages */}
             <div ref={listRef} className="flex-1 p-4 overflow-y-auto space-y-4 text-sm bg-transparent">
-              {messages.map((m, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className={`flex flex-col max-w-[80%] ${
-                    m.sender === "bot" ? "items-start" : "items-end ml-auto"
-                  }`}
-                >
-                  <div
-                    className={`px-3.5 py-2.5 rounded-2xl shadow-sm ${
-                      m.sender === "bot"
-                        ? "bg-gray-800/80 text-gray-200 rounded-bl-lg"
-                        : "bg-gradient-to-br from-fuchsia-600 to-purple-700 text-white rounded-br-lg"
+              {messages.map((m, i) => {
+                const links = m.sender === "bot" ? getQuickLinks(m.text) : [];
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className={`flex flex-col max-w-[80%] ${
+                      m.sender === "bot" ? "items-start" : "items-end ml-auto"
                     }`}
                   >
-                    {m.text}
-                  </div>
-                </motion.div>
-              ))}
+                    <div
+                      className={`px-3.5 py-2.5 rounded-2xl shadow-sm ${
+                        m.sender === "bot"
+                          ? "bg-gray-800/80 text-gray-200 rounded-bl-lg"
+                          : "bg-gradient-to-br from-fuchsia-600 to-purple-700 text-white rounded-br-lg"
+                      }`}
+                    >
+                      {m.text}
+                      <div className="text-xs text-gray-400 mt-1">
+                        {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </div>
+                    {links.length > 0 && (
+                      <div className="flex gap-2 mt-2">
+                        {links.map((link, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => window.location.href = link.url}
+                            className="px-3 py-1 text-xs bg-fuchsia-600 text-white rounded-full hover:bg-fuchsia-700 transition-colors"
+                          >
+                            {link.text}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
 
               {typing && (
                 <div className="flex items-center gap-2 text-xs text-gray-400 italic">
@@ -232,12 +223,19 @@ export default function ChatbotPopup() {
 
             {/* Input */}
             <div className="p-3 border-t border-white/10 bg-black/50 flex gap-2 items-center">
+              <button
+                onClick={handleVoiceInput}
+                className="p-2.5 rounded-full bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors"
+                title="Voice input"
+              >
+                <FiMic size={18} />
+              </button>
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") send(); }}
                 placeholder="Ask me anything..."
-                className="flex-1 px-4 py-2 rounded-xl bg-gray-800/70 text-sm outline-none 
+                className="flex-1 px-4 py-2 rounded-xl bg-gray-800/70 text-sm outline-none
                            border-none text-gray-200 placeholder:text-gray-500
                            focus:ring-2 focus:ring-fuchsia-500 transition-shadow"
               />
@@ -245,7 +243,7 @@ export default function ChatbotPopup() {
                 onClick={send}
                 disabled={!input.trim()}
                 className="p-2.5 rounded-full bg-gradient-to-br from-fuchsia-600 to-purple-700
-                           text-white shadow-md hover:scale-105 active:scale-95 transition-transform 
+                           text-white shadow-md hover:scale-105 active:scale-95 transition-transform
                            disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <FiSend size={18} />

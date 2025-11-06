@@ -45,7 +45,7 @@ export default function AuthLayout({
   }, [onGoogleSuccess]);
 
   return (
-    <div className="min-h-screen bg-black text-white relative overflow-y-auto font-[Poppins]">
+    <div className="min-h-screen bg-black text-white relative overflow-y-auto font-[Montserrat]">
       {/* 🔹 Animated background */}
       <div className="absolute inset-0 z-0">
         <LiquidEther />
@@ -62,7 +62,7 @@ export default function AuthLayout({
             transition={{ duration: 0.5 }}
             className="max-w-md w-full bg-gradient-to-b from-gray-900/80 to-black/70 border border-blue-500/30 shadow-[0_0_20px_rgba(0,0,0,0.5),0_0_20px_rgba(37,99,235,0.3)] rounded-2xl p-10 backdrop-blur-md"
           >
-            <h1 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-blue-400 via-cyan-300 to-purple-400 bg-clip-text text-transparent drop-shadow-lg">
+            <h1 className="text-3xl font-black mb-6 text-center bg-gradient-to-r from-blue-400 via-cyan-300 to-purple-400 bg-clip-text text-transparent drop-shadow-lg tracking-tight">
               {isLogin ? "Welcome Back" : "Create Your Account"}
             </h1>
 
@@ -114,7 +114,7 @@ export default function AuthLayout({
                 whileTap={{ scale: 0.97 }}
                 type="submit"
                 disabled={isLoading}
-                className="w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-xl font-semibold shadow-lg shadow-blue-700/40 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-xl font-semibold shadow-lg shadow-blue-700/40 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isLoading ? "Processing..." : (isLogin ? "Login" : "Sign Up")}
               </motion.button>
@@ -130,16 +130,16 @@ export default function AuthLayout({
             {/* Google Button */}
             <div className="flex justify-center">
               <motion.div
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ scale: 1.05, boxShadow: "0 10px 25px rgba(0,0,0,0.2)" }}
                 whileTap={{ scale: 0.95 }}
-                className="bg-white text-black rounded-full shadow-md hover:shadow-lg px-4 py-2 flex items-center gap-3 transition-all cursor-pointer relative"
+                className="bg-white text-black rounded-full shadow-lg hover:shadow-xl border border-gray-200 px-4 py-2 flex items-center gap-3 transition-all duration-300 cursor-pointer relative"
               >
                 <img
                   src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg"
                   alt="Google"
                   className="w-5 h-5"
                 />
-                <div className="text-sm font-medium tracking-wide">
+                <div className="text-sm font-semibold tracking-wide">
                   Continue with Google
                 </div>
                 <div

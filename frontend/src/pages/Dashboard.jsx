@@ -10,7 +10,7 @@ import {
   Bot,
   FileText,
   LayoutGrid,
-  TrendingUp,
+    TrendingUp
 } from "lucide-react";
 import {
   LineChart,
@@ -22,10 +22,25 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// --- Data helpers (derived from API attempts) ---
-function loadAttemptsFromAPI(user) {
-  // This will be handled in the component
-  return [];
+// --- Data helpers (derived from stored attempts) ---
+function loadAttempts() {
+  try {
+    const raw = localStorage.getItem("interview_attempts_v1");
+    const arr = raw ? JSON.parse(raw) : [];
+    const list = Array.isArray(arr) ? arr : [];
+    // Dedupe by composite key (type|mode|timestamp rounded to nearest second)
+    const seen = new Set();
+    const deduped = [];
+    for (const a of list) {
+      const key = `${a.type}|${a.mode}|${Math.round((a.timestamp || 0)/1000)}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      deduped.push(a);
+    }
+    return deduped;
+  } catch {
+    return [];
+  }
 }
 
 function aggregateByType(attempts) {
@@ -88,31 +103,21 @@ export default function Dashboard() {
   const userName = user?.name || "there";
   const navigate = useNavigate();
 
-  // Load attempts from API
-  const [attempts, setAttempts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Load attempts and keep them reactive on local changes and custom events
+  const [attempts, setAttempts] = useState(() => loadAttempts());
 
   useEffect(() => {
-    const fetchAttempts = async () => {
-      if (!user) return;
-      try {
-        const token = localStorage.getItem("token");
-        const response = await fetch("http://localhost:5000/api/progress/attempts", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setAttempts(data);
-        }
-      } catch (error) {
-        console.error("Error fetching attempts:", error);
-      } finally {
-        setLoading(false);
-      }
+    const onStorage = (e) => {
+      if (e.key === 'interview_attempts_v1') setAttempts(loadAttempts());
     };
-
-    fetchAttempts();
-  }, [user]);
+    const onUpdated = () => setAttempts(loadAttempts());
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('attempts-updated', onUpdated);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('attempts-updated', onUpdated);
+    };
+  }, []);
 
   const typeAgg = aggregateByType(attempts);
   const recentInterviews = recentFromAttempts(attempts);
@@ -128,7 +133,7 @@ export default function Dashboard() {
   // Hydration flag for skeleton fallback
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => { setHydrated(true); }, []);
-  if (!hydrated || loading) return <DashboardSkeleton />;
+  if (!hydrated) return <DashboardSkeleton />;
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -258,6 +263,56 @@ export default function Dashboard() {
                 </p>
               </div>
             </DashboardCard>
+              <DashboardCard>
+                <h2 className="text-xl font-semibold mb-4 flex items-center">
+                  <TrendingUp className="mr-3 h-5 w-5 text-purple-400" />
+                  Progress Tracker
+                </h2>
+                <div className="space-y-4">
+                  <div className="p-3 bg-white/5 rounded-lg">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm text-gray-400">Technical Skills</span>
+                      <span className="text-sm font-bold">{Math.min(100, Math.round((overallAverage * 1.1)))}%</span>
+                    </div>
+                    <div className="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-purple-500 to-blue-500" 
+                        style={{ width: `${Math.min(100, Math.round((overallAverage * 1.1)))}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="p-3 bg-white/5 rounded-lg">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm text-gray-400">Communication</span>
+                      <span className="text-sm font-bold">{Math.min(100, Math.round((overallAverage * 0.9)))}%</span>
+                    </div>
+                    <div className="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-blue-500 to-cyan-500" 
+                        style={{ width: `${Math.min(100, Math.round((overallAverage * 0.9)))}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="p-3 bg-white/5 rounded-lg">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm text-gray-400">Problem Solving</span>
+                      <span className="text-sm font-bold">{Math.min(100, Math.round((overallAverage * 1.05)))}%</span>
+                    </div>
+                    <div className="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-cyan-500 to-purple-500" 
+                        style={{ width: `${Math.min(100, Math.round((overallAverage * 1.05)))}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="mt-4 p-3 bg-black/30 rounded-lg border border-purple-500/20">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-gray-400">Overall Growth</div>
+                      <div className="text-sm font-bold text-purple-400">+{Math.round(totalInterviews * 12)}%</div>
+                    </div>
+                  </div>
+                </div>
+              </DashboardCard>
           </div>
         </div>
         </motion.div>

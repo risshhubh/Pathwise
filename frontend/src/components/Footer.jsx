@@ -40,9 +40,30 @@ export default function Footer() {
       >
         {/* About / Branding */}
         <motion.div variants={item} className="flex flex-col gap-4">
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
-            Pathwise
-          </h2>
+          <div className="flex flex-col items-start gap-1">
+            <h2 style={{
+              color: '#43bfc7',
+              fontWeight: 'bold',
+              fontSize: '2rem',
+              letterSpacing: '2px',
+              textShadow: '0 2px 8px rgba(67,191,199,0.3)',
+              fontFamily: 'Montserrat, Arial, sans-serif',
+              filter: 'contrast(1.5) brightness(1.2)',
+              marginBottom: '2px',
+            }}>
+              Pathwise
+            </h2>
+            <span style={{
+              color: '#43bfc7',
+              fontSize: '0.85rem',
+              fontWeight: '500',
+              opacity: 0.8,
+              letterSpacing: '1px',
+              fontFamily: 'Montserrat, Arial, sans-serif',
+            }}>
+              AI Job Portal
+            </span>
+          </div>
           <p className="text-gray-400 text-sm leading-relaxed">
             Helping you crack interviews with AI-powered mock sessions, resume tips, 
             and progress tracking. Stay ahead and level up your career!

@@ -271,11 +271,11 @@ export default function InterviewRoom() {
         report,
         plan,
       };
-      const response = await fetch('http://localhost:5000/api/progress/save-attempt', {
+      const response = await fetch('/api/progress/save-attempt', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem("token")}`,
+          'Authorization': `Bearer ${user.token}`,
         },
         body: JSON.stringify(payload),
       });
@@ -573,8 +573,8 @@ export default function InterviewRoom() {
                     <button
                       disabled={!canPrev}
                       onClick={() => canPrev && setCurrentIndex((i) => i - 1)}
-                      className={`cursor-pointer inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${
-                        canPrev ? "border-gray-700 hover:bg-white/5" : "border-gray-800 opacity-50 cursor-not-allowed"
+                      className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${
+                        canPrev ? "border-gray-700 hover:bg-white/5 cursor-pointer" : "border-gray-800 opacity-50 cursor-not-allowed"
                       }`}
                     >
                       <ChevronLeft size={16} /> Prev
@@ -582,8 +582,8 @@ export default function InterviewRoom() {
                     <button
                       disabled={!canNext}
                       onClick={() => canNext && setCurrentIndex((i) => i + 1)}
-                      className={`cursor-pointer inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${
-                        canNext ? "border-gray-700 hover:bg-white/5" : "border-gray-800 opacity-50 cursor-not-allowed"
+                      className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${
+                        canNext ? "border-gray-700 hover:bg-white/5 cursor-pointer" : "border-gray-800 opacity-50 cursor-not-allowed"
                       }`}
                     >
                       Next <ChevronRight size={16} />
@@ -624,15 +624,6 @@ export default function InterviewRoom() {
                       );
                       });
                     })()}
-
-                    {!questionSubmitted[current.id] && typeof answers[current.id] === 'number' && (
-                      <button
-                        onClick={submitCurrentQuestion}
-                        className="cursor-pointer w-full px-4 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-cyan-600 hover:opacity-90 text-white font-semibold"
-                      >
-                        Submit Answer
-                      </button>
-                    )}
 
                     {questionSubmitted[current.id] && current.explanation && (
                       <div className="mt-3 text-sm text-gray-300 bg-white/5 border border-gray-700 rounded-lg p-3">
