@@ -115,7 +115,8 @@ export const AuthProvider = ({ children }) => {
     if (!token || !user) return;
 
     try {
-      const response = await fetch("http://localhost:5000/api/user/profile", {
+      const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+      const response = await fetch(`${API_URL}/user/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.ok) {
