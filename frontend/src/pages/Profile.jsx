@@ -60,6 +60,10 @@ export default function Profile() {
     };
 
     fetchUserData();
+
+    const onAttemptsUpdated = () => fetchUserData();
+    window.addEventListener('attempts-updated', onAttemptsUpdated);
+    return () => window.removeEventListener('attempts-updated', onAttemptsUpdated);
   }, [navigate]);
 
   const handleProfileUpdate = async (updatedData) => {

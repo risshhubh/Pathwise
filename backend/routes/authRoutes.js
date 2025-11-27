@@ -26,7 +26,16 @@ router.post("/signup", async (req, res) => {
     res.status(201).json({
       message: "User created successfully",
       token,
-      user: { name: user.name, email: user.email, picture: user.picture },
+      user: {
+        name: user.name,
+        email: user.email,
+        picture: user.picture,
+        phone: user.phone || null,
+        location: user.location || null,
+        course: user.course || null,
+        interviewsCompleted: user.interviewsCompleted || 0,
+        averageScore: user.averageScore || 0,
+      },
     });
   } catch {
     res.status(500).json({ message: "Server error" });
@@ -52,7 +61,19 @@ router.post("/login", async (req, res) => {
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
-    res.json({ token, user: { name: user.name, email: user.email, picture: user.picture } });
+    res.json({
+      token,
+      user: {
+        name: user.name,
+        email: user.email,
+        picture: user.picture,
+        phone: user.phone || null,
+        location: user.location || null,
+        course: user.course || null,
+        interviewsCompleted: user.interviewsCompleted || 0,
+        averageScore: user.averageScore || 0,
+      },
+    });
   } catch {
     res.status(500).json({ message: "Server error" });
   }
@@ -87,7 +108,16 @@ router.post("/google-login", async (req, res) => {
 
     res.json({
       token: appToken,
-      user: { name: user.name, email: user.email, picture: user.picture },
+      user: {
+        name: user.name,
+        email: user.email,
+        picture: user.picture,
+        phone: user.phone || null,
+        location: user.location || null,
+        course: user.course || null,
+        interviewsCompleted: user.interviewsCompleted || 0,
+        averageScore: user.averageScore || 0,
+      },
     });
   } catch (err) {
     console.error("Google token verification error:", err);

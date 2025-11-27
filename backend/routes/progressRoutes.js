@@ -35,7 +35,19 @@ router.post("/save-attempt", auth, async (req, res) => {
       await user.save();
     }
 
-    res.status(201).json({ message: "Attempt saved successfully", attemptId: attempt._id });
+    // Return updated user stats to the client as well
+    const safeUser = {
+      name: user.name,
+      email: user.email,
+      picture: user.picture,
+      phone: user.phone || null,
+      location: user.location || null,
+      course: user.course || null,
+      interviewsCompleted: user.interviewsCompleted || 0,
+      averageScore: user.averageScore || 0,
+    };
+
+    res.status(201).json({ message: "Attempt saved successfully", attemptId: attempt._id, user: safeUser });
   } catch (error) {
     console.error("Error saving attempt:", error);
     res.status(500).json({ message: "Server error" });

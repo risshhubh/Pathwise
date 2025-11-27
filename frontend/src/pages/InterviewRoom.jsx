@@ -148,7 +148,7 @@ export default function InterviewRoom() {
   const query = useQuery();
   const navigate = useNavigate();
   const { push } = useToast();
-  const { user } = useAuth();
+  const { user, refreshUserData } = useAuth();
   const interviewType = (query.get("type") || "technical").toLowerCase();
 
   const [mode, setMode] = useState(null); // mcq | coding | quiz
@@ -271,15 +271,18 @@ export default function InterviewRoom() {
         report,
         plan,
       };
+      const token = localStorage.getItem('token');
       const response = await fetch('/api/progress/save-attempt', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.token}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
       if (response.ok) {
+        // Refresh user stats (interviewsCompleted, averageScore) so dashboard updates immediately
+        try { if (typeof refreshUserData === 'function') await refreshUserData(); } catch (e) { /* ignore */ }
         // Save report and plan to localStorage for UI display
         localStorage.setItem("last_report_v1", JSON.stringify({ ...report, timestamp: ts }));
         localStorage.setItem("practice_plan_v1", JSON.stringify(plan));
@@ -412,10 +415,12 @@ export default function InterviewRoom() {
     if (!submitted || mode !== "mcq") return null;
     let correct = 0;
     questions.forEach((q) => {
-      if (typeof answers[q.id] === "number" && answers[q.id] === q.answerIndex) correct += 1;
+      const mapped = optionMap[q.id];
+      const correctIndex = mapped ? mapped.answerIndex : q.answerIndex;
+      if (typeof answers[q.id] === "number" && answers[q.id] === correctIndex) correct += 1;
     });
     return { correct, total: questions.length, percent: Math.round((correct / questions.length) * 100) };
-  }, [submitted, mode, questions, answers]);
+  }, [submitted, mode, questions, answers, optionMap]);
 
   const restart = () => {
     setCurrentIndex(0);
@@ -625,6 +630,22 @@ export default function InterviewRoom() {
                       });
                     })()}
 
+                    {/* Per-question submit button */}
+                    {!questionSubmitted[current.id] && (
+                      <div className="mt-3">
+                        <button
+                          onClick={() => {
+                            const next = { ...(questionSubmitted || {}), [current.id]: true };
+                            setQuestionSubmitted(next);
+                            persistAttemptIfFinished(next);
+                          }}
+                          className="cursor-pointer px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-cyan-500 text-white font-semibold hover:opacity-90"
+                        >
+                          Submit Answer
+                        </button>
+                      </div>
+                    )}
+
                     {questionSubmitted[current.id] && current.explanation && (
                       <div className="mt-3 text-sm text-gray-300 bg-white/5 border border-gray-700 rounded-lg p-3">
                         <span className="text-gray-400">Explanation: </span>
@@ -713,7 +734,21 @@ export default function InterviewRoom() {
                         </ul>
                       </div>
                     )}
-                    {/* submit button removed as per requirement */}
+                    {/* Per-question submit for coding */}
+                    {!questionSubmitted[current.id] && (
+                      <div className="mt-3">
+                        <button
+                          onClick={() => {
+                            const next = { ...(questionSubmitted || {}), [current.id]: true };
+                            setQuestionSubmitted(next);
+                            persistAttemptIfFinished(next);
+                          }}
+                          className="cursor-pointer px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-cyan-500 text-white font-semibold hover:opacity-90"
+                        >
+                          Submit Response
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -736,7 +771,21 @@ export default function InterviewRoom() {
                         </ul>
                       </div>
                     )}
-                    {/* submit button removed as per requirement */}
+                    {/* Per-question submit for quiz */}
+                    {!questionSubmitted[current.id] && (
+                      <div className="mt-3">
+                        <button
+                          onClick={() => {
+                            const next = { ...(questionSubmitted || {}), [current.id]: true };
+                            setQuestionSubmitted(next);
+                            persistAttemptIfFinished(next);
+                          }}
+                          className="cursor-pointer px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-cyan-500 text-white font-semibold hover:opacity-90"
+                        >
+                          Submit Response
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -785,7 +834,28 @@ export default function InterviewRoom() {
                           <RotateCcw size={16} /> Try Again
                         </button>
                       </>
-                    ) : null}
+                    ) : (
+                      /* Show a final "Submit Round" button on the last question as a fallback */
+                      (currentIndex === questions.length - 1 && !questionSubmitted[current?.id]) ? (
+                        <button
+                          onClick={() => {
+                            // mark all questions submitted and persist
+                            const allMap = {};
+                            questions.forEach((q) => { allMap[q.id] = true; });
+                            setQuestionSubmitted(allMap);
+                            persistAttemptIfFinished(allMap);
+                            // scroll to results once saved
+                            setTimeout(() => {
+                              const el = document.getElementById('results-block');
+                              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }, 300);
+                          }}
+                          className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-cyan-500 text-white hover:opacity-95"
+                        >
+                          Submit Round
+                        </button>
+                      ) : null
+                    )}
                   </div>
                 </div>
               </div>

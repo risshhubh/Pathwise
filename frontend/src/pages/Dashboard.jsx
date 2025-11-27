@@ -104,26 +104,76 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   // Load attempts and keep them reactive on local changes and custom events
-  const [attempts, setAttempts] = useState(() => loadAttempts());
+  const [attempts, setAttempts] = useState([]);
+  const [loadingAttempts, setLoadingAttempts] = useState(false);
 
   useEffect(() => {
-    const onStorage = (e) => {
-      if (e.key === 'interview_attempts_v1') setAttempts(loadAttempts());
+    let mounted = true;
+
+    const fetchAttemptsFromServer = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      setLoadingAttempts(true);
+      try {
+        const res = await fetch("/api/progress/attempts", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!mounted) return;
+        if (res.ok) {
+          const data = await res.json();
+          setAttempts(Array.isArray(data) ? data : []);
+        } else {
+          // If server fetch fails and user is logged in, set to empty array (no fallback to local)
+          setAttempts([]);
+        }
+      } catch (err) {
+        if (!mounted) return;
+        setAttempts([]);
+      } finally {
+        if (mounted) setLoadingAttempts(false);
+      }
     };
-    const onUpdated = () => setAttempts(loadAttempts());
+
+    // On mount or when user changes, load attempts from server if logged in
+    if (user && user.email) {
+      fetchAttemptsFromServer();
+    } else {
+      setAttempts(loadAttempts());
+    }
+
+    const onStorage = (e) => {
+      if (e.key === 'interview_attempts_v1') {
+        // If a user is logged in, prefer server data and re-fetch; otherwise use localStorage
+        if (user && user.email) {
+          fetchAttemptsFromServer();
+        } else {
+          setAttempts(loadAttempts());
+        }
+      }
+    };
+    const onUpdated = () => {
+      if (user && user.email) {
+        fetchAttemptsFromServer();
+      } else {
+        setAttempts(loadAttempts());
+      }
+    };
     window.addEventListener('storage', onStorage);
     window.addEventListener('attempts-updated', onUpdated);
     return () => {
+      mounted = false;
       window.removeEventListener('storage', onStorage);
       window.removeEventListener('attempts-updated', onUpdated);
     };
-  }, []);
+  }, [user]);
 
   const typeAgg = aggregateByType(attempts);
   const recentInterviews = recentFromAttempts(attempts);
   const overallScores = attempts.filter(a => typeof a.scorePercent === 'number').map(a => a.scorePercent);
-  const overallAverage = overallScores.length ? Math.round(overallScores.reduce((s,v)=>s+v,0)/overallScores.length) : 0;
-  const totalInterviews = attempts.length;
+  const derivedAverage = overallScores.length ? Math.round(overallScores.reduce((s,v)=>s+v,0)/overallScores.length) : 0;
+  // If user is logged in, prefer server-side stats (authoritative). Fallback to derived from attempts.
+  const overallAverage = (user && typeof user.averageScore === 'number') ? user.averageScore : derivedAverage;
+  const totalInterviews = (user && typeof user.interviewsCompleted === 'number') ? user.interviewsCompleted : attempts.length;
 
   // Time-series of last scored attempts for the chart
   const lastScores = overallScores.slice(-8);

@@ -98,6 +98,14 @@ export const AuthProvider = ({ children }) => {
       averageScore: userData.averageScore || 0,
     };
     setUser(userObj);
+    // Always clear local attempts on login to ensure server data is used
+    try {
+      localStorage.removeItem('interview_attempts_v1');
+      localStorage.removeItem('last_report_v1');
+      localStorage.removeItem('practice_plan_v1');
+    } catch (e) {
+      // ignore localStorage errors
+    }
     // Smooth transition - return user object for immediate state update
     return userObj;
   };

@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AuthLayout from "../components/AuthLayout";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL= "https://pathwise-6jo5.onrender.com/api" | "http://localhost:5000/api";
+
 
 export default function AuthPage() {
   const navigate = useNavigate();
