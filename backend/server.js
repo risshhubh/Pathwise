@@ -7,6 +7,13 @@ const userRoutes = require("./routes/userRoutes");
 const connectDB = require("./config/db");
 
 dotenv.config();
+
+console.log("🔧 Environment variables loaded:");
+console.log("MONGO_URI:", process.env.MONGO_URI ? "Set" : "Not set");
+console.log("JWT_SECRET:", process.env.JWT_SECRET ? "Set" : "Not set");
+console.log("GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID ? "Set" : "Not set");
+console.log("PORT:", process.env.PORT || "5000 (default)");
+
 const app = express();
 app.use(express.json());
 app.use(cors());

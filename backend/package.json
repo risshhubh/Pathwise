@@ -22,8 +22,10 @@
     "mammoth": "^1.11.0",
     "mongoose": "^8.18.1",
     "multer": "^2.0.2",
-    "nodemon": "^3.1.10",
     "openai": "^5.23.1",
     "pdf-parse": "^1.1.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
   }
 }
