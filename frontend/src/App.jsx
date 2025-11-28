@@ -1,7 +1,3 @@
-import React, { Suspense, lazy } from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
-
 // 🧭 Layout Components
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -23,6 +19,8 @@ const AuthPage = lazy(() => import("./pages/AuthPage"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Help = lazy(() => import("./pages/Help"));
 const PersonalizedRoadmap = lazy(() => import("./pages/PersonalizedRoadmap")); 
+const AuthCallback = lazy(() => import("./pages/AuthCallback"));
+
 
 function AppLayout() {
   const location = useLocation();
@@ -42,6 +40,7 @@ function AppLayout() {
           <Route path="/about" element={<About />} />
           <Route path="/learn-more" element={<LearnMore />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
 
           {/* 🔐 Protected Routes */}
           <Route element={<ProtectedRoute />}>

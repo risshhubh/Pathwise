@@ -19,7 +19,7 @@ export default function AuthLayout({
 }) {
   const googleBtnRef = useRef(null);
 
-  // ✅ Initialize Google button
+  // ✅ Initialize Google button with redirect mode
   useEffect(() => {
     const parent = googleBtnRef.current;
     if (parent && parent.children.length === 0) {
@@ -30,7 +30,8 @@ export default function AuthLayout({
       script.onload = () => {
         window.google?.accounts.id.initialize({
           client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-          callback: onGoogleSuccess,
+          ux_mode: 'redirect',
+          redirect_uri: `${window.location.origin}/auth/callback`,
         });
         window.google?.accounts.id.renderButton(parent, {
           theme: "outline",
@@ -42,7 +43,7 @@ export default function AuthLayout({
       };
       document.body.appendChild(script);
     }
-  }, [onGoogleSuccess]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-black text-white relative overflow-y-auto font-[Montserrat]">

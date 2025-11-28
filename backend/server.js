@@ -16,7 +16,15 @@ console.log("PORT:", process.env.PORT || "5000 (default)");
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:5000',
+    'https://pathwise-icin.vercel.app',
+    'https://pathwise-j2t6.onrender.com'
+  ],
+  credentials: true
+}));
 
 // 🔹 MongoDB Connection
 connectDB();
